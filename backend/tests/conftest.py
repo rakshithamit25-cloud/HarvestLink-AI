@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 from app.database.session import Base
 from app.models import User
-from app.core.security import hash_password
+from app.core.security import hash_password, create_access_token
 from fastapi.testclient import TestClient
 from app.main import app
 from app.database.session import get_db
@@ -92,3 +92,13 @@ def client(db_session):
     test_client = TestClient(app, raise_server_exceptions=True)
     yield test_client
     app.dependency_overrides.clear()
+
+@pytest.fixture(scope="function")
+def farmer_token(db_session):
+    farmer = db_session.query(User).filter(User.role == "farmer").first()
+    return create_access_token({"sub": str(farmer.id), "role": farmer.role})
+
+@pytest.fixture(scope="function")
+def buyer_token(db_session):
+    buyer = db_session.query(User).filter(User.role == "buyer").first()
+    return create_access_token({"sub": str(buyer.id), "role": buyer.role})

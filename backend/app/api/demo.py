@@ -1,14 +1,20 @@
 import datetime
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.database.session import get_db, Base, engine
 from app.models import User, ProduceListing, BuyerRequirement, MatchResult, Order, Payment, AgentLog, AuditLog
 from app.core.security import hash_password
+from app.core.config import settings
 from app.agents.workflow import execute_matching_pipeline
 from app.services.order_service import OrderService
 from app.services.paypal_service import PayPalService
 
 router = APIRouter(prefix="/api/demo", tags=["demo"])
+
+def _require_demo_mode():
+    """Raise 403 if DEMO_MODE is not enabled."""
+    if not settings.DEMO_MODE:
+        raise HTTPException(status_code=403, detail="Demo mode is disabled")
 
 def seed_database(db: Session):
     # Check if already seeded
@@ -119,7 +125,9 @@ def seed_database(db: Session):
 def reset_database(db: Session = Depends(get_db)):
     """
     Clears all tables and reseeds pristine Kumar demo data.
+    Requires DEMO_MODE=true.
     """
+    _require_demo_mode()
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     seed_database(db)
@@ -128,14 +136,10 @@ def reset_database(db: Session = Depends(get_db)):
 @router.post("/run-scenario")
 async def run_kumar_demo_scenario(db: Session = Depends(get_db)):
     """
-    Runs the complete Kumar end-to-end demo scenario:
-    1. Kumar lists 500 kg Tomatoes ($1.00 asking, $0.90 min).
-    2. LangGraph Multi-Agent pipeline allocates 450 kg across 3 buyers.
-    3. Both farmer and buyers approve the deals.
-    4. Orders created.
-    5. PayPal Sandbox checkout completes and verifies.
-    6. Remaining inventory is verified at exactly 50 kg.
+    Runs the complete Kumar end-to-end demo scenario.
+    Requires DEMO_MODE=true.
     """
+    _require_demo_mode()
     # 1. Reset first for deterministic replay
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)

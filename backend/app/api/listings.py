@@ -29,10 +29,15 @@ def parse_voice_or_manual_text(request: TamilParseRequest):
 def create_listing(
     listing_in: ProduceListingCreate,
     db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_optional_current_user)
+    current_user: User = Depends(get_current_user)
 ):
-    # Default to farmer Kumar (id 1) if not logged in or during quick demo creation
-    farmer_id = current_user.id if current_user and current_user.role == "farmer" else 1
+    # Authenticated user must be a farmer
+    if current_user.role != "farmer":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only farmers can create listings"
+        )
+    farmer_id = current_user.id
 
     listing = ProduceListing(
         farmer_id=farmer_id,

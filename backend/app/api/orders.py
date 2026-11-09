@@ -5,21 +5,25 @@ from app.database.session import get_db
 from app.models import Order, User
 from app.schemas import OrderResponse, DeliveryConfirmRequest
 from app.services.order_service import OrderService
-from app.api.deps import get_optional_current_user
+from app.api.deps import get_current_user, get_optional_current_user
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
 
 @router.get("", response_model=List[OrderResponse])
 def get_orders(
-    farmer_id: Optional[int] = None,
-    buyer_id: Optional[int] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     query = db.query(Order)
-    if farmer_id:
-        query = query.filter(Order.farmer_id == farmer_id)
-    if buyer_id:
-        query = query.filter(Order.buyer_id == buyer_id)
+    if current_user.role == "farmer":
+        query = query.filter(Order.farmer_id == current_user.id)
+    elif current_user.role == "buyer":
+        query = query.filter(Order.buyer_id == current_user.id)
+    elif current_user.role == "operator":
+        # No registered_by_operator_id column exists in schema,
+        # so operators currently see no orders (cannot determine ownership).
+        # A future schema migration would add this link.
+        query = query.filter(Order.id == None)  # returns empty set
     
     orders = query.order_by(Order.id.desc()).all()
     results = []

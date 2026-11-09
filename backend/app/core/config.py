@@ -24,6 +24,9 @@ class Settings:
     LLM_API_KEY: str = os.getenv("LLM_API_KEY", "")
     LLM_MODEL: str = os.getenv("LLM_MODEL", "gemini-1.5-flash")
     
+    # Demo Mode
+    DEMO_MODE: bool = os.getenv("DEMO_MODE", "false").lower() == "true"
+    
     # URLs
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:5173")
     BACKEND_URL: str = os.getenv("BACKEND_URL", "http://localhost:8000")
