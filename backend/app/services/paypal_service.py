@@ -65,6 +65,18 @@ class PayPalService:
                 detail="Payment for this order has already been completed."
             )
             
+        if order.order_status in ["cancelled", "delivered", "rejected"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Cannot create payment for order in status '{order.order_status}'."
+            )
+
+        if order.match and order.match.status != "confirmed":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Payment creation is permitted only after both farmer and buyer approvals. Deal status is '{order.match.status}'."
+            )
+
         if existing_payment and existing_payment.paypal_order_id:
             approval_url = (
                 f"https://www.sandbox.paypal.com/checkoutnow?token={existing_payment.paypal_order_id}"
