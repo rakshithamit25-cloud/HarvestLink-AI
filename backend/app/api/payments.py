@@ -81,6 +81,13 @@ def capture_paypal_order(
             detail="Only the designated buyer for this order can capture payment."
         )
 
+    # Reject cancelled, rejected, delivered or invalid orders during capture
+    if order.order_status in ["cancelled", "delivered", "rejected"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot capture payment for order in status '{order.order_status}'."
+        )
+
     payment = PayPalService.capture_and_verify(
         db=db,
         order_id=order_id,

@@ -1,12 +1,15 @@
 import json
 import uuid
 import datetime
+import logging
 import httpx
 from typing import Dict, Any, Optional, Tuple
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from app.core.config import settings
 from app.models import Order, Payment
+
+logger = logging.getLogger(__name__)
 
 class PayPalService:
     @staticmethod
@@ -39,9 +42,10 @@ class PayPalService:
                 headers=headers
             )
             if resp.status_code != 200:
+                logger.error(f"PayPal OAuth token request failed with HTTP {resp.status_code}")
                 raise HTTPException(
                     status_code=status.HTTP_502_BAD_GATEWAY,
-                    detail=f"Failed to obtain PayPal OAuth token: {resp.text}"
+                    detail="Unable to authenticate with payment processor."
                 )
             token_data = resp.json()
             return token_data.get("access_token", "")
@@ -95,23 +99,22 @@ class PayPalService:
             paypal_order_id = f"MOCK-PAYPAL-{uuid.uuid4().hex[:12].upper()}"
             approval_url = f"{settings.FRONTEND_URL}/checkout?order_id={order.id}&paypal_order_id={paypal_order_id}&mock=true"
             
-            payment = Payment(
-                order_id=order.id,
-                paypal_order_id=paypal_order_id,
-                amount=order.total_amount,
-                currency="USD",
-                status="created",
-                idempotency_key=idempotency_key,
-                is_mock=True,
-                raw_response_json=json.dumps({
-                    "id": paypal_order_id,
-                    "status": "CREATED",
-                    "intent": "CAPTURE",
-                    "mock_mode": True,
-                    "notice": "MOCK MODE - no real PayPal call. For real Sandbox, configure credentials in .env"
-                })
-            )
-            db.add(payment)
+            payment = existing_payment or Payment(order_id=order.id)
+            payment.paypal_order_id = paypal_order_id
+            payment.amount = order.total_amount
+            payment.currency = "USD"
+            payment.status = "created"
+            payment.idempotency_key = idempotency_key
+            payment.is_mock = True
+            payment.raw_response_json = json.dumps({
+                "id": paypal_order_id,
+                "status": "CREATED",
+                "intent": "CAPTURE",
+                "mock_mode": True,
+                "notice": "MOCK MODE - no real PayPal call. For real Sandbox, configure credentials in .env"
+            })
+            if not existing_payment:
+                db.add(payment)
             order.payment_status = "created"
             db.commit()
             db.refresh(payment)
@@ -154,9 +157,10 @@ class PayPalService:
             )
             
             if resp.status_code not in [200, 201]:
+                logger.error(f"PayPal create order failed with HTTP {resp.status_code}")
                 raise HTTPException(
                     status_code=status.HTTP_502_BAD_GATEWAY,
-                    detail=f"PayPal API error on Create Order: {resp.text}"
+                    detail="Payment processor error during order creation."
                 )
                 
             paypal_data = resp.json()
@@ -171,21 +175,79 @@ class PayPalService:
             if not approval_url:
                 approval_url = f"https://www.sandbox.paypal.com/checkoutnow?token={paypal_order_id}"
 
-            payment = Payment(
-                order_id=order.id,
-                paypal_order_id=paypal_order_id,
-                amount=order.total_amount,
-                currency="USD",
-                status="created",
-                idempotency_key=idempotency_key,
-                is_mock=False,
-                raw_response_json=json.dumps(paypal_data)
-            )
-            db.add(payment)
+            payment = existing_payment or Payment(order_id=order.id)
+            payment.paypal_order_id = paypal_order_id
+            payment.amount = order.total_amount
+            payment.currency = "USD"
+            payment.status = "created"
+            payment.idempotency_key = idempotency_key
+            payment.is_mock = False
+            payment.raw_response_json = json.dumps(paypal_data)
+            if not existing_payment:
+                db.add(payment)
             order.payment_status = "created"
             db.commit()
             db.refresh(payment)
             return payment, approval_url
+
+    @staticmethod
+    def _finalize_capture(
+        db: Session,
+        payment: Payment,
+        order: Order,
+        capture_data: Dict[str, Any]
+    ) -> Payment:
+        """
+        Validates capture details (status, amount, currency, capture ID)
+        and finalizes the payment and order records.
+        Used by both the normal capture response and HTTP 422 recovery.
+        """
+        if capture_data.get("status") != "COMPLETED":
+            payment.status = "failed"
+            order.payment_status = "failed"
+            db.commit()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"PayPal order not completed. Status: {capture_data.get('status')}"
+            )
+
+        purchase_unit = capture_data.get("purchase_units", [{}])[0]
+        payments_obj = purchase_unit.get("payments", {})
+        captures = payments_obj.get("captures", [])
+        capture_obj = captures[0] if captures else {}
+
+        capture_id = capture_obj.get("id")
+        if not capture_id:
+            payment.status = "failed"
+            order.payment_status = "failed"
+            db.commit()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Payment verification failed: No valid capture ID found in processor response."
+            )
+
+        cap_amount = float(capture_obj.get("amount", {}).get("value", 0.0))
+        cap_currency = capture_obj.get("amount", {}).get("currency_code", "")
+
+        if abs(cap_amount - order.total_amount) > 0.05 or cap_currency != "USD":
+            payment.status = "failed"
+            order.payment_status = "failed"
+            db.commit()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Payment verification failed: Amount or currency mismatch. Expected {order.total_amount} USD, got {cap_amount} {cap_currency}"
+            )
+
+        payment.status = "completed"
+        payment.paypal_capture_id = capture_id
+        payment.verified_at = datetime.datetime.utcnow()
+        payment.raw_response_json = json.dumps(capture_data)
+
+        order.payment_status = "completed"
+        order.order_status = "processing"
+        db.commit()
+        db.refresh(payment)
+        return payment
 
     @staticmethod
     def capture_and_verify(
@@ -199,6 +261,19 @@ class PayPalService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Payment record not found for this order."
             )
+
+        # Fix 1: Validate stored PayPal order ID exists and matches supplied ID
+        if not payment.paypal_order_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No PayPal order ID stored for this payment record."
+            )
+
+        if not paypal_order_id or payment.paypal_order_id != paypal_order_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Supplied PayPal order ID does not match the payment record for this order."
+            )
             
         if payment.status == "completed":
             return payment
@@ -207,11 +282,36 @@ class PayPalService:
         if not order:
             raise HTTPException(status_code=404, detail="Order not found")
 
+        # Fix 3: Reject ineligible orders (cancelled, delivered, rejected)
+        if order.order_status in ["cancelled", "delivered", "rejected"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Cannot capture payment for order in status '{order.order_status}'."
+            )
+
+        # Fix 5: Apply business validation (amount & currency) in MOCK mode too
+        if abs(payment.amount - order.total_amount) > 0.05 or payment.currency != "USD":
+            payment.status = "failed"
+            order.payment_status = "failed"
+            db.commit()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Payment verification failed: Amount or currency mismatch. Expected {order.total_amount} USD, got {payment.amount} {payment.currency}"
+            )
+
         # Mock mode capture
         if payment.is_mock or PayPalService._is_mock():
             payment.status = "completed"
             payment.paypal_capture_id = f"MOCK-CAP-{uuid.uuid4().hex[:12].upper()}"
             payment.verified_at = datetime.datetime.utcnow()
+            payment.raw_response_json = json.dumps({
+                "id": payment.paypal_order_id,
+                "status": "COMPLETED",
+                "mock_mode": True,
+                "capture_id": payment.paypal_capture_id,
+                "amount": payment.amount,
+                "currency": payment.currency
+            })
             
             order.payment_status = "completed"
             order.order_status = "processing"
@@ -233,68 +333,30 @@ class PayPalService:
                 headers=capture_headers
             )
 
-            # If already captured on PayPal, fetch order details to verify
+            # Fix 2: If already captured on PayPal (422), fetch order details and verify fully
             if capture_resp.status_code == 422:
+                logger.info(f"Capture returned 422 for order {order_id}; attempting recovery via order query.")
                 verify_resp = client.get(
                     f"{settings.PAYPAL_API_BASE_URL}/v2/checkout/orders/{paypal_order_id}",
                     headers={"Authorization": f"Bearer {token}"}
                 )
                 if verify_resp.status_code == 200:
                     order_details = verify_resp.json()
-                    if order_details.get("status") == "COMPLETED":
-                        payment.status = "completed"
-                        payment.verified_at = datetime.datetime.utcnow()
-                        order.payment_status = "completed"
-                        order.order_status = "processing"
-                        db.commit()
-                        db.refresh(payment)
-                        return payment
+                    return PayPalService._finalize_capture(db, payment, order, order_details)
+                else:
+                    logger.error(f"PayPal order details recovery query failed with HTTP {verify_resp.status_code}")
 
+            # Fix 6: Sanitize provider error response (do not expose raw capture_resp.text)
             if capture_resp.status_code not in [200, 201]:
                 payment.status = "failed"
                 order.payment_status = "failed"
                 db.commit()
+                logger.error(f"PayPal capture failed with HTTP {capture_resp.status_code}")
                 raise HTTPException(
                     status_code=status.HTTP_502_BAD_GATEWAY,
-                    detail=f"PayPal Capture failed: {capture_resp.text}"
+                    detail="Payment processor error during payment capture."
                 )
 
             capture_data = capture_resp.json()
-            if capture_data.get("status") != "COMPLETED":
-                payment.status = "failed"
-                order.payment_status = "failed"
-                db.commit()
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"PayPal order not completed. Status: {capture_data.get('status')}"
-                )
+            return PayPalService._finalize_capture(db, payment, order, capture_data)
 
-            # Verify amount and currency
-            purchase_unit = capture_data.get("purchase_units", [{}])[0]
-            payments_obj = purchase_unit.get("payments", {})
-            captures = payments_obj.get("captures", [{}])
-            capture_obj = captures[0] if captures else {}
-            
-            capture_id = capture_obj.get("id")
-            cap_amount = float(capture_obj.get("amount", {}).get("value", 0.0))
-            cap_currency = capture_obj.get("amount", {}).get("currency_code", "")
-
-            if abs(cap_amount - order.total_amount) > 0.05 or cap_currency != "USD":
-                payment.status = "failed"
-                order.payment_status = "failed"
-                db.commit()
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Payment verification failed: Amount or currency mismatch. Expected {order.total_amount} USD, got {cap_amount} {cap_currency}"
-                )
-
-            payment.status = "completed"
-            payment.paypal_capture_id = capture_id
-            payment.verified_at = datetime.datetime.utcnow()
-            payment.raw_response_json = json.dumps(capture_data)
-
-            order.payment_status = "completed"
-            order.order_status = "processing"
-            db.commit()
-            db.refresh(payment)
-            return payment
