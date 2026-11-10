@@ -1,8 +1,13 @@
 import time
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.agents.state import HarvestLinkState, MatchProposal
 from app.models import AgentLog, MatchResult, ProduceListing
 from app.services.inventory_service import InventoryService, InsufficientStockException
+from app.agents.llm_client import LLMClient
+
+class MatchingExplanation(BaseModel):
+    rationale: str
 
 def run_matching_agent(state: HarvestLinkState, db: Session) -> HarvestLinkState:
     start_time = time.time()
@@ -48,7 +53,7 @@ def run_matching_agent(state: HarvestLinkState, db: Session) -> HarvestLinkState
         )
 
         try:
-            # Atomic reservation in DB
+            # Atomic reservation in DB - backend strictly decides and reserves
             InventoryService.reserve_stock(db, state["listing_id"], to_alloc)
             avail -= to_alloc
             allocated_total += to_alloc
@@ -83,14 +88,48 @@ def run_matching_agent(state: HarvestLinkState, db: Session) -> HarvestLinkState
     state["available_quantity"] = avail
     state["proposals"] = proposals
 
+    # LLM Enhancement for Allocation Rationale
+    mode = "rule-based fallback"
+    llm_client = LLMClient()
+    active_matches_count = len([p for p in proposals if p["allocated_quantity"] > 0])
+    base_summary = f"Allocated {allocated_total:.0f} kg across {active_matches_count} buyers. Remaining: {avail:.0f} kg."
+    output_sum = base_summary
+
+    if llm_client.is_configured():
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You are an agricultural inventory allocation assistant. "
+                    "Provide a brief rationale for the stock allocation across buyers based on proximity and price in JSON. "
+                    "Return a JSON object with key 'rationale' (string)."
+                )
+            },
+            {
+                "role": "user",
+                "content": (
+                    f"Crop: {state['crop_name']}, Total stock: {state['quantity']} kg, "
+                    f"Allocated: {allocated_total:.0f} kg across {active_matches_count} buyers, "
+                    f"Remaining: {avail:.0f} kg."
+                )
+            }
+        ]
+        llm_resp = llm_client.chat_completion_json(messages)
+        if llm_resp:
+            try:
+                validated = MatchingExplanation(**llm_resp)
+                mode = "LLM"
+                output_sum = f"{base_summary} AI Note: {validated.rationale}"
+            except Exception:
+                mode = "rule-based fallback"
+
     duration_ms = int((time.time() - start_time) * 1000)
     input_sum = f"Stock: {state['quantity']} kg, Candidates: {len(state.get('candidates', []))}"
-    output_sum = f"Allocated {allocated_total:.0f} kg across {len([p for p in proposals if p['allocated_quantity'] > 0])} buyers. Remaining: {avail:.0f} kg."
 
     agent_log = AgentLog(
         agent_name="Matching Agent",
         task=task,
-        mode=state.get("mode", "rule-based"),
+        mode=mode,
         input_summary=input_sum,
         output_summary=output_sum,
         decision_status="COMPLETED",
@@ -102,7 +141,7 @@ def run_matching_agent(state: HarvestLinkState, db: Session) -> HarvestLinkState
     state["agent_logs"].append({
         "agent": "Matching Agent",
         "task": task,
-        "mode": state.get("mode", "rule-based"),
+        "mode": mode,
         "summary": output_sum,
         "duration_ms": duration_ms
     })

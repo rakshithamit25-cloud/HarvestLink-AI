@@ -1,13 +1,22 @@
 import time
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.agents.state import HarvestLinkState
 from app.models import AgentLog, MatchResult, BuyerRequirement
+from app.agents.llm_client import LLMClient
+
+class NegotiationSuggestion(BaseModel):
+    suggested_price: float
+    rationale: str
 
 def run_negotiation_agent(state: HarvestLinkState, db: Session) -> HarvestLinkState:
     start_time = time.time()
     task = f"Formulate suggested prices within limits for {len(state.get('proposals', []))} proposals"
     
+    llm_client = LLMClient()
+    llm_calls_succeeded = 0
     results = []
+
     for prop in state.get("proposals", []):
         if prop["status"] == "no_overlap" or prop["allocated_quantity"] <= 0:
             continue
@@ -16,23 +25,55 @@ def run_negotiation_agent(state: HarvestLinkState, db: Session) -> HarvestLinkSt
         if not req:
             continue
 
-        # Negotiation pricing logic
+        # Negotiation pricing boundaries strictly set by backend
         farmer_ask = state["expected_price"]
         farmer_min = state["minimum_price"]
         buyer_max = req.maximum_price
 
-        # Check if buyer max >= asking price
+        # Deterministic rule-based calculation
         if buyer_max >= farmer_ask:
-            # Middle-ground between farmer asking and buyer max
-            suggested = round((farmer_ask + buyer_max) / 2.0, 2)
-            terms_note = f"Suggested ${suggested:.2f}/kg (farmer asked ${farmer_ask:.2f}, buyer max ${buyer_max:.2f}). Both parties gain surplus."
+            rule_suggested = round((farmer_ask + buyer_max) / 2.0, 2)
+            rule_terms_note = f"Suggested ${rule_suggested:.2f}/kg (farmer asked ${farmer_ask:.2f}, buyer max ${buyer_max:.2f}). Both parties gain surplus."
         elif buyer_max >= farmer_min:
-            # Between farmer minimum and buyer max
-            suggested = round((farmer_min + buyer_max) / 2.0, 2)
-            terms_note = f"Suggested ${suggested:.2f}/kg (acceptable above farmer minimum ${farmer_min:.2f}, within buyer limit ${buyer_max:.2f})."
+            rule_suggested = round((farmer_min + buyer_max) / 2.0, 2)
+            rule_terms_note = f"Suggested ${rule_suggested:.2f}/kg (acceptable above farmer minimum ${farmer_min:.2f}, within buyer limit ${buyer_max:.2f})."
         else:
-            suggested = 0.0
-            terms_note = f"No price overlap: Farmer minimum ${farmer_min:.2f} > Buyer max ${buyer_max:.2f}."
+            rule_suggested = 0.0
+            rule_terms_note = f"No price overlap: Farmer minimum ${farmer_min:.2f} > Buyer max ${buyer_max:.2f}."
+
+        suggested = rule_suggested
+        terms_note = rule_terms_note
+
+        # If LLM is configured and overlap exists, query LLM for price suggestion within bounds
+        if llm_client.is_configured() and buyer_max >= farmer_min:
+            messages = [
+                {
+                    "role": "system",
+                    "content": (
+                        "You are an agricultural price negotiation assistant. "
+                        "Suggest a mutually fair price strictly within the farmer's minimum floor and the buyer's maximum ceiling. "
+                        "Return a JSON object with keys 'suggested_price' (float) and 'rationale' (string)."
+                    )
+                },
+                {
+                    "role": "user",
+                    "content": (
+                        f"Crop: {state['crop_name']}, Farmer Asking Price: ${farmer_ask:.2f}, "
+                        f"Farmer Minimum Floor: ${farmer_min:.2f}, Buyer Maximum Ceiling: ${buyer_max:.2f}."
+                    )
+                }
+            ]
+            llm_resp = llm_client.chat_completion_json(messages)
+            if llm_resp:
+                try:
+                    parsed = NegotiationSuggestion(**llm_resp)
+                    # Backend strictly enforces bounds: LLM price cannot violate farmer_min or buyer_max
+                    if farmer_min <= parsed.suggested_price <= buyer_max:
+                        suggested = round(parsed.suggested_price, 2)
+                        terms_note = f"AI Suggested ${suggested:.2f}/kg (bounded between ${farmer_min:.2f}-${buyer_max:.2f}): {parsed.rationale}"
+                        llm_calls_succeeded += 1
+                except Exception:
+                    pass
 
         prop["ai_suggested_price"] = suggested
         prop["match_reason"] += f" | Negotiation: {terms_note}"
@@ -55,6 +96,7 @@ def run_negotiation_agent(state: HarvestLinkState, db: Session) -> HarvestLinkSt
             "terms_note": terms_note
         })
 
+    mode = "LLM" if (llm_client.is_configured() and llm_calls_succeeded > 0) else "rule-based fallback"
     duration_ms = int((time.time() - start_time) * 1000)
     input_sum = f"Proposals: {len(state.get('proposals', []))}, Farmer Min: ${state['minimum_price']}"
     output_sum = f"Negotiated suggested terms for {len(results)} deals within mutually acceptable boundaries."
@@ -62,7 +104,7 @@ def run_negotiation_agent(state: HarvestLinkState, db: Session) -> HarvestLinkSt
     agent_log = AgentLog(
         agent_name="Negotiation Agent",
         task=task,
-        mode=state.get("mode", "rule-based"),
+        mode=mode,
         input_summary=input_sum,
         output_summary=output_sum,
         decision_status="COMPLETED",
@@ -75,7 +117,7 @@ def run_negotiation_agent(state: HarvestLinkState, db: Session) -> HarvestLinkSt
     state["agent_logs"].append({
         "agent": "Negotiation Agent",
         "task": task,
-        "mode": state.get("mode", "rule-based"),
+        "mode": mode,
         "summary": output_sum,
         "duration_ms": duration_ms
     })

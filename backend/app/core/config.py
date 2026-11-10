@@ -22,7 +22,8 @@ class Settings:
     # AI Agents
     LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "heuristic").lower()
     LLM_API_KEY: str = os.getenv("LLM_API_KEY", "")
-    LLM_MODEL: str = os.getenv("LLM_MODEL", "gemini-1.5-flash")
+    LLM_MODEL: str = os.getenv("LLM_MODEL", "")
+    LLM_BASE_URL: str = os.getenv("LLM_BASE_URL", "https://api.groq.com/openai/v1")
     
     # Demo Mode
     DEMO_MODE: bool = os.getenv("DEMO_MODE", "false").lower() == "true"
