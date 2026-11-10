@@ -24,6 +24,7 @@ export const api = {
   // Listings
   fetchListings: async () => {
     const res = await fetch(`${API_BASE}/listings`);
+    if (!res.ok) return [];
     return res.json();
   },
   createListing: async (listingData) => {
@@ -70,6 +71,7 @@ export const api = {
   // Orders
   fetchOrders: async () => {
     const res = await fetch(`${API_BASE}/orders`);
+    if (!res.ok) return [];
     return res.json();
   },
   confirmDelivery: async (orderId, payload = {}) => {
@@ -114,10 +116,12 @@ export const api = {
   // Logs & Metrics
   fetchAgentLogs: async () => {
     const res = await fetch(`${API_BASE}/logs/agent?limit=20`);
+    if (!res.ok) return [];
     return res.json();
   },
   fetchImpactMetrics: async () => {
     const res = await fetch(`${API_BASE}/impact/metrics`);
+    if (!res.ok) return null;
     return res.json();
   }
 };

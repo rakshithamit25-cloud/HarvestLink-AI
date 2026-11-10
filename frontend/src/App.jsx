@@ -13,8 +13,8 @@ const CROPS = [
   { name: "Onion", ta: "வெங்காயம்", icon: "🧅", defaultExpected: 0.80, defaultMin: 0.70 },
   { name: "Brinjal", ta: "கத்தரிக்காய்", icon: "🍆", defaultExpected: 0.60, defaultMin: 0.50 },
   { name: "Potato", ta: "உருளைக்கிழங்கு", icon: "🥔", defaultExpected: 0.70, defaultMin: 0.60 },
-  { name: "Carrot", ta: "கேரட்", icon: "🥕", defaultExpected: 1.20, defaultMin: 1.00 },
-  { name: "Okra", ta: "வெண்டைக்காய்", icon: "🌿", defaultExpected: 0.90, defaultMin: 0.75 }
+  { name: "Banana", ta: "வாழைப்பழம்", icon: "🍌", defaultExpected: 0.50, defaultMin: 0.40 },
+  { name: "Chilli", ta: "மிளகாய்", icon: "🌶️", defaultExpected: 1.50, defaultMin: 1.20 }
 ];
 
 export default function App() {
@@ -39,6 +39,7 @@ export default function App() {
   const [speechTranscript, setSpeechTranscript] = useState("");
   const [speechSupported, setSpeechSupported] = useState(true);
   const [audioFeedback, setAudioFeedback] = useState("");
+  const [quantityCandidates, setQuantityCandidates] = useState(null); // null or array when needs_confirmation
 
   // Operator Consent State
   const [operatorFarmerName, setOperatorFarmerName] = useState("Kumar");
@@ -69,16 +70,23 @@ export default function App() {
         const text = event.results[0][0].transcript;
         setSpeechTranscript(text);
         setIsListening(false);
+        setQuantityCandidates(null); // clear any previous candidates
         // Call backend parse endpoint
         try {
           const parsed = await api.parseVoiceText(text);
-          if (parsed.crop_name) {
-            const matchedCrop = CROPS.find(c => c.name.toLowerCase() === parsed.crop_name.toLowerCase());
-            if (matchedCrop) setSelectedCrop(matchedCrop);
+          if (parsed.status === 'needs_confirmation' && Array.isArray(parsed.candidates) && parsed.candidates.length > 0) {
+            // Ambiguous quantity: show candidate selection UI, do NOT auto-populate
+            setQuantityCandidates(parsed.candidates);
+          } else {
+            setQuantityCandidates(null);
+            if (parsed.crop_name) {
+              const matchedCrop = CROPS.find(c => c.name.toLowerCase() === parsed.crop_name.toLowerCase());
+              if (matchedCrop) setSelectedCrop(matchedCrop);
+            }
+            if (parsed.quantity) setQuantity(parsed.quantity.toString());
+            if (parsed.expected_price) setExpectedPrice(parsed.expected_price.toString());
+            if (parsed.location) setLocation(parsed.location);
           }
-          if (parsed.quantity) setQuantity(parsed.quantity.toString());
-          if (parsed.expected_price) setExpectedPrice(parsed.expected_price.toString());
-          if (parsed.location) setLocation(parsed.location);
         } catch (e) {
           console.error("Failed to parse speech text", e);
         }
@@ -106,16 +114,17 @@ export default function App() {
         api.fetchAgentLogs(),
         api.fetchImpactMetrics()
       ]);
-      setListings(allListings);
-      setOrders(allOrders);
-      setAgentLogs(logs);
-      setImpactMetrics(metrics);
+      setListings(Array.isArray(allListings) ? allListings : []);
+      setOrders(Array.isArray(allOrders) ? allOrders : []);
+      setAgentLogs(Array.isArray(logs) ? logs : []);
+      setImpactMetrics(metrics && typeof metrics === 'object' && !Array.isArray(metrics) ? metrics : null);
 
-      if (allListings.length > 0) {
-        const first = allListings[0];
+      const safeListings = Array.isArray(allListings) ? allListings : [];
+      if (safeListings.length > 0) {
+        const first = safeListings[0];
         setActiveListing(first);
         const matchData = await api.fetchMatches(first.id);
-        setMatches(matchData);
+        setMatches(Array.isArray(matchData) ? matchData : []);
       }
     } catch (e) {
       console.error("Data refresh error", e);
@@ -504,6 +513,39 @@ export default function App() {
                   "{speechTranscript}"
                 </div>
               )}
+
+              {/* needs_confirmation: show candidate quantity buttons, never auto-populate */}
+              {quantityCandidates && (
+                <div className="mt-3 p-3 bg-amber-50 border border-amber-300 rounded-lg text-left">
+                  <p className="text-xs font-semibold text-amber-900 mb-2">
+                    {lang === 'ta'
+                      ? 'அளவு தெளிவாக புரியவில்லை. சரியான அளவை தேர்ந்தெடுக்கவும்:'
+                      : 'Quantity was ambiguous. Please select the correct amount:'}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {quantityCandidates.map((cand) => (
+                      <button
+                        key={cand}
+                        type="button"
+                        onClick={() => {
+                          setQuantity(cand.toString());
+                          setQuantityCandidates(null);
+                        }}
+                        className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg transition active:scale-95"
+                      >
+                        {cand} kg
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setQuantityCandidates(null)}
+                      className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs rounded-lg transition"
+                    >
+                      {lang === 'ta' ? 'ரத்து செய்' : 'Cancel'}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Picture-based Crop Selection (6 Crops) */}
@@ -680,7 +722,7 @@ export default function App() {
                     </div>
 
                     <p className="text-xs text-slate-600 mb-3 bg-white/60 p-2 rounded border border-slate-100">
-                      ℹ️ {m.match_reason}
+                      ℹ️ {m.match_reason || 'Reason not available'}
                     </p>
 
                     {/* Action Buttons */}
