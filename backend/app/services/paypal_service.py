@@ -14,21 +14,28 @@ logger = logging.getLogger(__name__)
 class PayPalService:
     @staticmethod
     def _is_mock() -> bool:
-        return (
-            settings.PAYPAL_MODE == "mock" or
-            not settings.PAYPAL_CLIENT_ID or
-            settings.PAYPAL_CLIENT_ID == "mock_client_id" or
-            not settings.PAYPAL_CLIENT_SECRET
-        )
+        return settings.PAYPAL_MODE == "mock"
 
     @staticmethod
     def get_access_token() -> str:
         """
         Retrieves OAuth2 Bearer token from PayPal Sandbox REST API
         using client_id and client_secret.
+        Fails fast if Sandbox configuration is missing or invalid.
         """
         if PayPalService._is_mock():
             return "mock_sandbox_access_token"
+
+        if (
+            not settings.PAYPAL_CLIENT_ID or
+            settings.PAYPAL_CLIENT_ID == "mock_client_id" or
+            not settings.PAYPAL_CLIENT_SECRET
+        ):
+            logger.error("PayPal Sandbox is enabled, but valid client credentials are not configured.")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="PayPal Sandbox configuration error: missing or invalid credentials."
+            )
 
         auth = (settings.PAYPAL_CLIENT_ID, settings.PAYPAL_CLIENT_SECRET)
         data = {"grant_type": "client_credentials"}

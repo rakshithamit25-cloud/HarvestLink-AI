@@ -14,6 +14,11 @@ from app.core.security import hash_password, create_access_token
 from fastapi.testclient import TestClient
 from app.main import app
 from app.database.session import get_db
+from app.core.config import settings
+
+@pytest.fixture(autouse=True)
+def force_test_settings(monkeypatch):
+    monkeypatch.setattr(settings, "PAYPAL_MODE", "mock")
 
 # Store test database in local temp directory to prevent OneDrive file lock contention
 TEST_DB_FILE = os.path.join(tempfile.gettempdir(), f"test_hl_{os.getpid()}.db").replace(os.sep, "/")
