@@ -163,6 +163,8 @@ class TamilParseResponse(BaseModel):
     missing_fields: List[str] = []
     original_text: str
     is_manual_fallback: bool = False
+    status: str = "parsed"
+    candidates: Optional[List[float]] = None
 
 # Agent Logs
 class AgentLogResponse(BaseModel):

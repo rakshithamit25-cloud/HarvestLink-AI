@@ -1,5 +1,5 @@
 import re
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
 TAMIL_CROP_MAP = {
     "தக்காளி": "Tomato",
@@ -32,7 +32,84 @@ TAMIL_CROP_MAP = {
     "cabbage": "Cabbage"
 }
 
-TAMIL_NUMBER_WORDS = {
+TAMIL_DIGITS = {
+    '௦': '0', '௧': '1', '௨': '2', '௩': '3', '௪': '4',
+    '௫': '5', '௬': '6', '௭': '7', '௮': '8', '௯': '9'
+}
+
+TAMIL_COMPOUND_PREFIXES = {
+    # Hundreds compound (e.g. இருநூற்று ஐம்பது = 250)
+    "தொள்ளாயிரத்து": 900,
+    "எண்ணூற்று": 800,
+    "எழுநூற்று": 700,
+    "அறுநூற்று": 600,
+    "ஐந்நூற்று": 500,
+    "ஐநூற்று": 500,
+    "நானூற்று": 400,
+    "முந்நூற்று": 300,
+    "இருநூற்று": 200,
+    "நூற்று": 100,
+    "நூற்றி": 100,
+    "ஆயிரத்து": 1000,
+    # Tens compound (e.g. இருபத்து ஐந்து = 25)
+    "தொண்ணூற்று": 90,
+    "எண்பத்து": 80,
+    "எழுபத்து": 70,
+    "அறுபத்து": 60,
+    "ஐம்பத்து": 50,
+    "நாற்பத்து": 40,
+    "முப்பத்து": 30,
+    "இருபத்து": 20,
+}
+
+TAMIL_STANDALONE_WORDS = {
+    # Thousands
+    "ஆயிரம்": 1000,
+    # Hundreds
+    "தொள்ளாயிரம்": 900,
+    "எண்ணூறு": 800,
+    "எழுநூறு": 700,
+    "அறுநூறு": 600,
+    "ஐந்நூறு": 500,
+    "ஐநூறு": 500,
+    "நானூறு": 400,
+    "முந்நூறு": 300,
+    "இருநூறு": 200,
+    "நூறு": 100,
+    # Tens
+    "தொண்ணூறு": 90,
+    "எண்பது": 80,
+    "எழுபது": 70,
+    "அறுபது": 60,
+    "ஐம்பது": 50,
+    "நாற்பது": 40,
+    "முப்பது": 30,
+    "இருபது": 20,
+    "பத்து": 10,
+    # Teens
+    "பத்தொன்பது": 19,
+    "பதினெட்டு": 18,
+    "பதினேழு": 17,
+    "பதினாறு": 16,
+    "பதினைந்து": 15,
+    "பதினான்கு": 14,
+    "பதின்மூன்று": 13,
+    "பதிமூன்று": 13,
+    "பன்னிரண்டு": 12,
+    "பதினொன்று": 11,
+    # Units
+    "ஒன்பது": 9,
+    "எட்டு": 8,
+    "ஏழு": 7,
+    "ஆறு": 6,
+    "ஐந்து": 5,
+    "நான்கு": 4,
+    "மூன்று": 3,
+    "இரண்டு": 2,
+    "ஒன்று": 1,
+}
+
+TAMIL_MULTIPLIERS = {
     "ஒன்று": 1, "ஒரு": 1,
     "இரண்டு": 2, "இரு": 2,
     "மூன்று": 3, "மு": 3,
@@ -42,32 +119,84 @@ TAMIL_NUMBER_WORDS = {
     "ஏழு": 7,
     "எட்டு": 8,
     "ஒன்பது": 9,
-    "பத்து": 10,
-    "இருபது": 20,
-    "முப்பது": 30,
-    "நாற்பது": 40,
-    "ஐம்பது": 50,
-    "நூறு": 100,
-    "இருநூறு": 200,
-    "முந்நூறு": 300,
-    "நானூறு": 400,
-    "ஐநூறு": 500,
-    "அறுநூறு": 600,
-    "எழுநூறு": 700,
-    "எண்ணூறு": 800,
-    "தொள்ளாயிரம்": 900,
-    "ஆயிரம்": 1000
 }
 
-TAMIL_DIGITS = {
-    '௦': '0', '௧': '1', '௨': '2', '௩': '3', '௪': '4',
-    '௫': '5', '௬': '6', '௭': '7', '௮': '8', '௯': '9'
+TAMIL_SCALES = {
+    "ஆயிரம்": 1000,
+    "நூறு": 100,
 }
+
+def extract_tamil_word_numbers(text: str) -> List[float]:
+    """
+    Extracts numerical values written in Tamil words, supporting:
+    - Fused forms (e.g. ஐநூறு=500, இருநூறு=200, முந்நூறு=300, நானூறு=400)
+    - Multi-word numbers (e.g. நான்கு நூறு=400, இருநூற்று ஐம்பது=250)
+    - Compound hundreds + tens/units
+    """
+    found_values = []
+    tokens = text.split()
+    i = 0
+    while i < len(tokens):
+        token = tokens[i].strip(",.?!;:()")
+        
+        # 3 tokens: e.g. "நான்கு நூற்று ஐம்பது" -> 450
+        if i + 2 < len(tokens):
+            t1 = tokens[i].strip(",.?!;:()")
+            t2 = tokens[i+1].strip(",.?!;:()")
+            t3 = tokens[i+2].strip(",.?!;:()")
+            if t1 in TAMIL_MULTIPLIERS and t2 in ["நூற்று", "நூற்றி"]:
+                mult = TAMIL_MULTIPLIERS[t1]
+                if t3 in TAMIL_STANDALONE_WORDS:
+                    found_values.append(float(mult * 100 + TAMIL_STANDALONE_WORDS[t3]))
+                    i += 3
+                    continue
+
+        # 2 tokens:
+        if i + 1 < len(tokens):
+            t1 = tokens[i].strip(",.?!;:()")
+            t2 = tokens[i+1].strip(",.?!;:()")
+            # Multiplier + Scale (e.g. 'நான்கு நூறு' -> 400)
+            if t1 in TAMIL_MULTIPLIERS and t2 in TAMIL_SCALES:
+                found_values.append(float(TAMIL_MULTIPLIERS[t1] * TAMIL_SCALES[t2]))
+                i += 2
+                continue
+            # Compound prefix + standalone (e.g. 'இருநூற்று ஐம்பது' -> 250)
+            if t1 in TAMIL_COMPOUND_PREFIXES and t2 in TAMIL_STANDALONE_WORDS:
+                found_values.append(float(TAMIL_COMPOUND_PREFIXES[t1] + TAMIL_STANDALONE_WORDS[t2]))
+                i += 2
+                continue
+
+        # 1 token compound (e.g. if written together)
+        matched_compound = False
+        for prefix, p_val in TAMIL_COMPOUND_PREFIXES.items():
+            if token.startswith(prefix) and len(token) > len(prefix):
+                suffix = token[len(prefix):]
+                if suffix in TAMIL_STANDALONE_WORDS:
+                    found_values.append(float(p_val + TAMIL_STANDALONE_WORDS[suffix]))
+                    matched_compound = True
+                    break
+        if matched_compound:
+            i += 1
+            continue
+
+        # 1 token standalone (e.g. 'ஐநூறு' -> 500)
+        if token in TAMIL_STANDALONE_WORDS:
+            found_values.append(float(TAMIL_STANDALONE_WORDS[token]))
+            i += 1
+            continue
+
+        i += 1
+
+    return found_values
 
 def parse_tamil_or_english_text(raw_text: str) -> Dict[str, Any]:
     """
     Parses voice-transcribed or typed Tamil / English text to extract
     crop name, quantity, expected price, and location. Identifies missing fields.
+    Supports fused forms (ஐநூறு=500, இருநூறு=200, முந்நூறு=300, நானூறு=400)
+    and multi-word numbers (நான்கு நூறு=400, இருநூற்று ஐம்பது=250).
+    Ambiguous input returns status 'needs_confirmation' with candidate values
+    and never a guessed quantity.
     """
     if not raw_text or not raw_text.strip():
         return {
@@ -78,17 +207,19 @@ def parse_tamil_or_english_text(raw_text: str) -> Dict[str, Any]:
             "location": None,
             "missing_fields": ["crop_name", "quantity", "expected_price", "location"],
             "original_text": raw_text or "",
-            "is_manual_fallback": True
+            "is_manual_fallback": True,
+            "status": "parsed",
+            "candidates": None
         }
-        
+
     text = raw_text.strip()
     
-    # Replace Tamil numeral glyphs with standard digits
+    # Replace Tamil numeral glyphs with standard Arabic digits
     for t_char, d_char in TAMIL_DIGITS.items():
         text = text.replace(t_char, d_char)
-        
+
     lower_text = text.lower()
-    
+
     # 1. Extract Crop
     detected_crop = None
     for keyword, standard_name in TAMIL_CROP_MAP.items():
@@ -96,36 +227,78 @@ def parse_tamil_or_english_text(raw_text: str) -> Dict[str, Any]:
             detected_crop = standard_name
             break
 
-    # 2. Extract Quantity
-    detected_qty = None
-    
-    # Check numeric patterns e.g. "500 kg", "500 கிலோ", "500"
-    num_match = re.search(r'(\d+(?:\.\d+)?)\s*(?:கிலோ|கிகி|kg|kilogram|kilograms|quintal)?', text, re.IGNORECASE)
-    if num_match:
-        try:
-            detected_qty = float(num_match.group(1))
-        except ValueError:
-            pass
-
-    # Check Tamil written number words if no digit found
-    if detected_qty is None:
-        for word, val in TAMIL_NUMBER_WORDS.items():
-            if word in text:
-                detected_qty = float(val)
-                break
-
-    # 3. Extract Price if present (e.g. "$1", "1 டாலர்", "80 ரூபாய்", "1 dollar")
+    # 2. Extract Price if present (e.g. "$1", "1 டாலர்", "80 ரூபாய்", "1 dollar")
+    # Identify price span so we don't treat price digits as quantity
     detected_price = None
-    price_match = re.search(r'(?:\$|ரூபாய்|rs|usd|\$|டாலர்)\s*(\d+(?:\.\d+)?)', text, re.IGNORECASE)
-    if not price_match:
-        price_match = re.search(r'(\d+(?:\.\d+)?)\s*(?:\$|ரூபாய்|rs|usd|டாலர்|dollars?|dollar)', text, re.IGNORECASE)
-    if price_match:
-        try:
-            detected_price = float(price_match.group(1))
-        except ValueError:
-            pass
+    price_spans = []
+    
+    for pat in [
+        r'(?:\$|ரூபாய்|rs\.?|usd|டாலர்)\s*(\d+(?:\.\d+)?)',
+        r'(\d+(?:\.\d+)?)\s*(?:\$|ரூபாய்|rs\.?|usd|டாலர்|dollars?|dollar|inr)'
+    ]:
+        for match in re.finditer(pat, text, re.IGNORECASE):
+            try:
+                val = float(match.group(1))
+                if detected_price is None:
+                    detected_price = val
+                price_spans.append(match.span())
+            except ValueError:
+                pass
 
-    # 4. Extract Location if mentioned (e.g. "Salem", "சேலம்", "சேலத்தில்", "Erode", "ஈரோடு")
+    # Helper: check if a span overlaps with price spans
+    def overlaps_price(start: int, end: int) -> bool:
+        for p_start, p_end in price_spans:
+            if not (end <= p_start or start >= p_end):
+                return True
+        return False
+
+    # 3. Extract Quantity candidates
+    quantity_candidates: List[float] = []
+
+    # A) Find all digit numbers not belonging to price
+    unit_pat = r'(\d+(?:\.\d+)?)\s*(?:கிலோ|கிகி|kg|kilogram|kilograms|quintal|quintals|டன்|ton|tons)?'
+    for match in re.finditer(unit_pat, text, re.IGNORECASE):
+        start, end = match.span()
+        if not overlaps_price(start, end):
+            try:
+                num = float(match.group(1))
+                if num > 0:
+                    quantity_candidates.append(num)
+            except ValueError:
+                pass
+
+    # B) Extract Tamil word numbers
+    tamil_words_candidates = extract_tamil_word_numbers(text)
+    for w_val in tamil_words_candidates:
+        if w_val > 0:
+            quantity_candidates.append(w_val)
+
+    # De-duplicate while preserving order
+    unique_candidates: List[float] = []
+    for c in quantity_candidates:
+        if c not in unique_candidates:
+            unique_candidates.append(c)
+
+    # Ambiguity check:
+    # If multiple candidates found, mark as 'needs_confirmation' and never guess!
+    status = "parsed"
+    detected_qty: Optional[float] = None
+    reported_candidates: Optional[List[float]] = None
+
+    if len(unique_candidates) > 1:
+        status = "needs_confirmation"
+        detected_qty = None
+        reported_candidates = unique_candidates
+    elif len(unique_candidates) == 1:
+        detected_qty = unique_candidates[0]
+        status = "parsed"
+        reported_candidates = None
+    else:
+        detected_qty = None
+        status = "parsed"
+        reported_candidates = None
+
+    # 4. Extract Location if mentioned
     detected_location = None
     loc_keywords = {
         "சேல": "Salem", "salem": "Salem",
@@ -159,5 +332,7 @@ def parse_tamil_or_english_text(raw_text: str) -> Dict[str, Any]:
         "location": detected_location,
         "missing_fields": missing,
         "original_text": raw_text,
-        "is_manual_fallback": False
+        "is_manual_fallback": False,
+        "status": status,
+        "candidates": reported_candidates
     }
