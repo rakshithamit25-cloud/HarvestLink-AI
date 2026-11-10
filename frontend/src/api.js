@@ -68,6 +68,28 @@ export const api = {
     return res.json();
   },
 
+  // Buyers
+  fetchBuyerRequirements: async () => {
+    const res = await fetch(`${API_BASE}/buyers/requirements`);
+    if (!res.ok) return [];
+    return res.json();
+  },
+  createBuyerRequirement: async (reqData) => {
+    const token = await api.ensureBuyerAuth();
+    const headers = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    const res = await fetch(`${API_BASE}/buyers/requirements`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(reqData)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Failed to create requirement");
+    }
+    return res.json();
+  },
+
   // Auth
   login: async (email, password) => {
     const res = await fetch(`${API_BASE}/auth/login`, {

@@ -73,7 +73,15 @@ export const translations = {
     paypal_verifying_capture: "Buyer approved on PayPal. Securely verifying and capturing payment with backend...",
     paypal_payment_success: "Payment successfully captured and verified! Order is now processing.",
     paypal_payment_failed: "Payment capture failed. Order remains unpaid.",
-    paypal_untrusted_url: "Security Warning: Untrusted PayPal approval URL rejected."
+    paypal_untrusted_url: "Security Warning: Untrusted PayPal approval URL rejected.",
+    buyer_portal_title: "Buyer Procurement & Demand Portal",
+    buyer_portal_desc: "Post commercial produce requirements to match with smallholder farmers.",
+    buyer_name_label: "Buyer Entity / Company",
+    max_purchase_price: "Maximum Purchase Price ($/kg)",
+    post_requirement: "Post Purchase Requirement",
+    buyer_demands_title: "Active Buyer Demands",
+    required_date: "Required Delivery Date",
+    requirement_posted_success: "Procurement requirement successfully posted! AI agent will match with available farm produce."
   },
   ta: {
     app_title: "ஹார்வெஸ்ட்லிங்க் AI",
@@ -149,6 +157,14 @@ export const translations = {
     paypal_verifying_capture: "பேபாலில் ஒப்புதல் அளிக்கப்பட்டது. கட்டணத்தை சரிபார்த்து உறுதி செய்கிறது...",
     paypal_payment_success: "கட்டணம் வெற்றிகரமாக பெறப்பட்டு சரிபார்க்கப்பட்டது! ஆர்டர் செயலாக்கத்தில் உள்ளது.",
     paypal_payment_failed: "கட்டணம் செலுத்துவதில் தோல்வி. ஆர்டர் இன்னும் செலுத்தப்படவில்லை.",
-    paypal_untrusted_url: "பாதுகாப்பு எச்சரிக்கை: நம்பத்தகாத பேபால் ஒப்புதல் இணைப்பு நிராகரிக்கப்பட்டது."
+    paypal_untrusted_url: "பாதுகாப்பு எச்சரிக்கை: நம்பத்தகாத பேபால் ஒப்புதல் இணைப்பு நிராகரிக்கப்பட்டது.",
+    buyer_portal_title: "கொள்முதல் தேவை மற்றும் தேவைகள் பதிவு",
+    buyer_portal_desc: "விவசாயிகளிடமிருந்து நேரடியாக பயிர் கொள்முதல் செய்ய உங்கள் தேவைகளை பதிவு செய்யுங்கள்.",
+    buyer_name_label: "கொள்முதல் நிறுவனம் / பெயர்",
+    max_purchase_price: "அதிகபட்ச கொள்முதல் விலை ($/கிலோ)",
+    post_requirement: "கொள்முதல் தேவையை பதிவு செய்",
+    buyer_demands_title: "செயலில் உள்ள கொள்முதல் தேவைகள்",
+    required_date: "தேவைப்படும் தேதி",
+    requirement_posted_success: "கொள்முதல் தேவை வெற்றிகரமாக பதிவு செய்யப்பட்டது! ஏஐ ஏஜென்ட் கிடைக்கக்கூடிய பயிர்களுடன் பொருத்தும்."
   }
 };

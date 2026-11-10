@@ -171,6 +171,14 @@ export default function App() {
   const [consentMethod, setConsentMethod] = useState("verbal");
   const [consentChecked, setConsentChecked] = useState(false);
 
+  // Buyer Portal State
+  const [buyerRequirements, setBuyerRequirements] = useState([]);
+  const [buyerCropName, setBuyerCropName] = useState("Tomato");
+  const [buyerQuantity, setBuyerQuantity] = useState("100");
+  const [buyerMaxPrice, setBuyerMaxPrice] = useState("1.20");
+  const [buyerLocation, setBuyerLocation] = useState("Salem");
+  const [buyerRequiredDate, setBuyerRequiredDate] = useState("2026-11-12");
+
   // App Data
   const [listings, setListings] = useState([]);
   const [activeListing, setActiveListing] = useState(null);
@@ -324,16 +332,18 @@ export default function App() {
 
   const refreshData = async () => {
     try {
-      const [allListings, allOrders, logs, metrics] = await Promise.all([
+      const [allListings, allOrders, logs, metrics, allReqs] = await Promise.all([
         api.fetchListings(),
         api.fetchOrders(),
         api.fetchAgentLogs(),
-        api.fetchImpactMetrics()
+        api.fetchImpactMetrics(),
+        api.fetchBuyerRequirements()
       ]);
       setListings(Array.isArray(allListings) ? allListings : []);
       setOrders(Array.isArray(allOrders) ? allOrders : []);
       setAgentLogs(Array.isArray(logs) ? logs : []);
       setImpactMetrics(metrics && typeof metrics === 'object' && !Array.isArray(metrics) ? metrics : null);
+      setBuyerRequirements(Array.isArray(allReqs) ? allReqs : []);
 
       const safeListings = Array.isArray(allListings) ? allListings : [];
       if (safeListings.length > 0) {
@@ -448,6 +458,27 @@ export default function App() {
       alert("Produce listing successfully published!");
     } catch (e) {
       alert("Error creating listing");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Create Buyer Requirement
+  const handlePostBuyerRequirement = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    setLoading(true);
+    try {
+      await api.createBuyerRequirement({
+        crop_name: buyerCropName,
+        required_quantity: parseFloat(buyerQuantity) || 100,
+        maximum_price: parseFloat(buyerMaxPrice) || 1.20,
+        location: buyerLocation || "Salem",
+        required_date: buyerRequiredDate || "2026-11-12"
+      });
+      await refreshData();
+      alert(t.requirement_posted_success || "Procurement requirement successfully posted! AI agent will match with available farm produce.");
+    } catch (err) {
+      alert(err.message || "Failed to post requirement");
     } finally {
       setLoading(false);
     }
@@ -708,8 +739,150 @@ export default function App() {
       {/* Main Content Workspace */}
       <main className="max-w-7xl mx-auto px-4 mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        {/* Left Column: Input Form (Farmer / Operator) */}
-        <section className="lg:col-span-5 space-y-6">
+        {/* Left Column: Input Form (Buyer vs Farmer / Operator) */}
+        {role === 'buyer' ? (
+          <section className="lg:col-span-5 space-y-6">
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <span>🏢</span>
+                  <span>{t.buyer_portal_title}</span>
+                </h2>
+                <span className="text-xs bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full font-medium">
+                  Buyer Mode
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mb-5">{t.buyer_portal_desc}</p>
+
+              {/* Picture-based Crop Selection (6 Crops) */}
+              <div className="mb-4">
+                <label className="block text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wider">{t.crop}</label>
+                <div className="grid grid-cols-3 gap-2 mb-2">
+                  {CROPS.map((crop) => (
+                    <button
+                      key={crop.name}
+                      type="button"
+                      onClick={() => {
+                        setBuyerCropName(crop.name);
+                        setBuyerMaxPrice((crop.defaultExpected * 1.2).toFixed(2));
+                      }}
+                      className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center gap-1 ${
+                        buyerCropName.toLowerCase() === crop.name.toLowerCase()
+                          ? 'border-blue-600 bg-blue-50 text-blue-900 font-bold ring-2 ring-blue-500/20'
+                          : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                      }`}
+                    >
+                      <span className="text-2xl">{crop.icon}</span>
+                      <span className="text-xs">{lang === 'ta' ? crop.ta : crop.name}</span>
+                    </button>
+                  ))}
+                </div>
+                <input
+                  type="text"
+                  value={buyerCropName}
+                  onChange={(e) => setBuyerCropName(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-xs font-semibold text-slate-700"
+                  placeholder="Or enter crop name..."
+                />
+              </div>
+
+              {/* Form Fields */}
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">{t.quantity_kg}</label>
+                  <input
+                    type="number"
+                    value={buyerQuantity}
+                    onChange={(e) => setBuyerQuantity(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm font-semibold"
+                    placeholder="100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">{t.max_purchase_price}</label>
+                  <input
+                    type="number"
+                    step="0.05"
+                    value={buyerMaxPrice}
+                    onChange={(e) => setBuyerMaxPrice(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm font-semibold"
+                    placeholder="1.20"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mb-5">
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">{t.location}</label>
+                  <input
+                    type="text"
+                    value={buyerLocation}
+                    onChange={(e) => setBuyerLocation(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm font-semibold"
+                    placeholder="Salem"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">{t.required_date}</label>
+                  <input
+                    type="date"
+                    value={buyerRequiredDate}
+                    onChange={(e) => setBuyerRequiredDate(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm font-semibold"
+                  />
+                </div>
+              </div>
+
+              {/* Post Button */}
+              <button
+                onClick={handlePostBuyerRequirement}
+                disabled={loading}
+                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md transition active:scale-95 flex items-center justify-center gap-2"
+              >
+                <span>🏢</span>
+                <span>{t.post_requirement}</span>
+              </button>
+            </div>
+
+            {/* Active Demands Card */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+              <h3 className="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
+                <span>📋</span>
+                <span>{t.buyer_demands_title}</span>
+                <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-normal">
+                  {buyerRequirements.length}
+                </span>
+              </h3>
+              {buyerRequirements.length === 0 ? (
+                <p className="text-xs text-slate-400 py-3 text-center">
+                  No procurement requirements posted yet.
+                </p>
+              ) : (
+                <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
+                  {buyerRequirements.map((req) => (
+                    <div key={req.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-bold text-slate-800">
+                          {req.crop_name} • {req.required_quantity} kg
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          Max: ${parseFloat(req.maximum_price).toFixed(2)}/kg • {req.location || 'Salem'} • {req.required_date || 'ASAP'}
+                        </p>
+                        {req.buyer_name && (
+                          <p className="text-[11px] text-slate-400 font-medium">By: {req.buyer_name}</p>
+                        )}
+                      </div>
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 capitalize">
+                        {req.status || 'open'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        ) : (
+          <section className="lg:col-span-5 space-y-6">
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
@@ -916,6 +1089,7 @@ export default function App() {
             </button>
           </div>
         </section>
+        )}
 
         {/* Right Column: Matching, Negotiations & PayPal Flow */}
         <section className="lg:col-span-7 space-y-6">
