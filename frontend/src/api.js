@@ -68,9 +68,41 @@ export const api = {
     return res.json();
   },
 
+  // Auth
+  login: async (email, password) => {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+    if (!res.ok) {
+      throw new Error("Authentication failed");
+    }
+    const data = await res.json();
+    if (data.access_token) {
+      sessionStorage.setItem("hl_buyer_token", data.access_token);
+    }
+    return data;
+  },
+  ensureBuyerAuth: async () => {
+    let token = sessionStorage.getItem("hl_buyer_token");
+    if (!token) {
+      try {
+        const authData = await api.login("restaurant_a@harvestlink.org", "buyer123");
+        token = authData.access_token;
+      } catch (e) {
+        console.warn("Auto-login demo buyer skipped or failed", e);
+      }
+    }
+    return token;
+  },
+
   // Orders
   fetchOrders: async () => {
-    const res = await fetch(`${API_BASE}/orders`);
+    const token = await api.ensureBuyerAuth();
+    const headers = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    const res = await fetch(`${API_BASE}/orders`, { headers });
     if (!res.ok) return [];
     return res.json();
   },
@@ -85,18 +117,33 @@ export const api = {
 
   // Payments
   createPayPalOrder: async (orderId) => {
+    const token = await api.ensureBuyerAuth();
+    const headers = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
     const res = await fetch(`${API_BASE}/payments/create-order/${orderId}`, {
-      method: "POST"
+      method: "POST",
+      headers
     });
-    return res.json();
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.detail || `PayPal order creation failed (${res.status})`);
+    }
+    return data;
   },
   capturePayPalOrder: async (orderId, paypalOrderId) => {
+    const token = await api.ensureBuyerAuth();
+    const headers = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
     const res = await fetch(`${API_BASE}/payments/capture/${orderId}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ paypal_order_id: paypalOrderId })
     });
-    return res.json();
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.detail || `PayPal capture failed (${res.status})`);
+    }
+    return data;
   },
 
   // Operator

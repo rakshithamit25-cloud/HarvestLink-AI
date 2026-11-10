@@ -17,6 +17,129 @@ const CROPS = [
   { name: "Chilli", ta: "மிளகாய்", icon: "🌶️", defaultExpected: 1.50, defaultMin: 1.20 }
 ];
 
+// Full crop catalogue with categories (Browse All Crops)
+const ALL_CROP_CATEGORIES = [
+  {
+    key: "vegetables",
+    crops: [
+      { name: "Tomato",       ta: "தக்காளி",            icon: "🍅", defaultExpected: 1.00, defaultMin: 0.90 },
+      { name: "Onion",        ta: "வெங்காயம்",           icon: "🧅", defaultExpected: 0.80, defaultMin: 0.70 },
+      { name: "Brinjal",      ta: "கத்தரிக்காய்",        icon: "🍆", defaultExpected: 0.60, defaultMin: 0.50 },
+      { name: "Potato",       ta: "உருளைக்கிழங்கு",      icon: "🥔", defaultExpected: 0.70, defaultMin: 0.60 },
+      { name: "Chilli",       ta: "மிளகாய்",             icon: "🌶️", defaultExpected: 1.50, defaultMin: 1.20 },
+      { name: "Carrot",       ta: "கேரட்",               icon: "🥕", defaultExpected: 1.20, defaultMin: 1.00 },
+      { name: "Cabbage",      ta: "முட்டைக்கோஸ்",        icon: "🥬", defaultExpected: 0.50, defaultMin: 0.40 },
+      { name: "Cauliflower",  ta: "காலிஃபிளவர்",         icon: "🥦", defaultExpected: 0.70, defaultMin: 0.60 },
+      { name: "Okra",         ta: "வெண்டைக்காய்",        icon: "🌿", defaultExpected: 0.90, defaultMin: 0.75 },
+      { name: "Cucumber",     ta: "வெள்ளரிக்காய்",       icon: "🥒", defaultExpected: 0.60, defaultMin: 0.50 },
+      { name: "Pumpkin",      ta: "பூசணிக்காய்",         icon: "🎃", defaultExpected: 0.40, defaultMin: 0.30 },
+      { name: "Bitter Gourd", ta: "பாகற்காய்",           icon: "🥝", defaultExpected: 0.80, defaultMin: 0.65 },
+      { name: "Bottle Gourd", ta: "சுரைக்காய்",          icon: "🫙", defaultExpected: 0.45, defaultMin: 0.35 },
+      { name: "Beans",        ta: "பீன்ஸ்",              icon: "🫘", defaultExpected: 1.10, defaultMin: 0.90 },
+      { name: "Drumstick",    ta: "முருங்கைக்காய்",      icon: "🌱", defaultExpected: 1.00, defaultMin: 0.80 },
+      { name: "Radish",       ta: "முள்ளங்கி",           icon: "🫚", defaultExpected: 0.50, defaultMin: 0.40 },
+      { name: "Beetroot",     ta: "பீட்ரூட்",            icon: "🫀", defaultExpected: 0.70, defaultMin: 0.55 },
+      { name: "Spinach",      ta: "கீரை",                icon: "🌿", defaultExpected: 0.80, defaultMin: 0.60 },
+      { name: "Capsicum",     ta: "குடைமிளகாய்",         icon: "🫑", defaultExpected: 1.30, defaultMin: 1.10 },
+      { name: "Green Peas",   ta: "பட்டாணி",             icon: "🟢", defaultExpected: 1.50, defaultMin: 1.20 },
+    ]
+  },
+  {
+    key: "fruits",
+    crops: [
+      { name: "Banana",       ta: "வாழைப்பழம்",          icon: "🍌", defaultExpected: 0.50, defaultMin: 0.40 },
+      { name: "Mango",        ta: "மாம்பழம்",             icon: "🥭", defaultExpected: 1.50, defaultMin: 1.20 },
+      { name: "Papaya",       ta: "பப்பாளி",              icon: "🍈", defaultExpected: 0.60, defaultMin: 0.50 },
+      { name: "Guava",        ta: "கொய்யா",               icon: "🍏", defaultExpected: 0.80, defaultMin: 0.65 },
+      { name: "Watermelon",   ta: "தர்பூசணி",             icon: "🍉", defaultExpected: 0.30, defaultMin: 0.25 },
+      { name: "Muskmelon",    ta: "கஸ்தூரி மாம்பழம்",    icon: "🍈", defaultExpected: 0.50, defaultMin: 0.40 },
+      { name: "Pineapple",    ta: "அன்னாசி",              icon: "🍍", defaultExpected: 0.70, defaultMin: 0.55 },
+      { name: "Grapes",       ta: "திராட்சை",             icon: "🍇", defaultExpected: 1.20, defaultMin: 1.00 },
+      { name: "Pomegranate",  ta: "மாதுளை",               icon: "🍎", defaultExpected: 1.80, defaultMin: 1.50 },
+      { name: "Orange",       ta: "ஆரஞ்சு",               icon: "🍊", defaultExpected: 1.00, defaultMin: 0.80 },
+      { name: "Lemon",        ta: "எலுமிச்சை",            icon: "🍋", defaultExpected: 1.20, defaultMin: 1.00 },
+      { name: "Jackfruit",    ta: "பலாப்பழம்",            icon: "🍈", defaultExpected: 0.40, defaultMin: 0.30 },
+      { name: "Sapota",       ta: "சப்போட்டா",            icon: "🟤", defaultExpected: 0.90, defaultMin: 0.70 },
+      { name: "Coconut",      ta: "தேங்காய்",             icon: "🥥", defaultExpected: 0.20, defaultMin: 0.15 },
+    ]
+  },
+  {
+    key: "cereals",
+    crops: [
+      { name: "Rice",           ta: "அரிசி",             icon: "🌾", defaultExpected: 0.40, defaultMin: 0.35 },
+      { name: "Wheat",          ta: "கோதுமை",            icon: "🌾", defaultExpected: 0.35, defaultMin: 0.30 },
+      { name: "Maize",          ta: "மக்காச்சோளம்",      icon: "🌽", defaultExpected: 0.25, defaultMin: 0.20 },
+      { name: "Sorghum",        ta: "சோளம்",             icon: "🌾", defaultExpected: 0.22, defaultMin: 0.18 },
+      { name: "Pearl Millet",   ta: "கம்பு",             icon: "🌾", defaultExpected: 0.28, defaultMin: 0.22 },
+      { name: "Finger Millet",  ta: "ராகி",              icon: "🌾", defaultExpected: 0.30, defaultMin: 0.25 },
+      { name: "Foxtail Millet", ta: "தினை",              icon: "🌾", defaultExpected: 0.35, defaultMin: 0.28 },
+      { name: "Little Millet",  ta: "சாமை",              icon: "🌾", defaultExpected: 0.40, defaultMin: 0.32 },
+      { name: "Barnyard Millet",ta: "குதிரைவாலி",        icon: "🌾", defaultExpected: 0.45, defaultMin: 0.36 },
+      { name: "Kodo Millet",    ta: "வரகு",              icon: "🌾", defaultExpected: 0.38, defaultMin: 0.30 },
+    ]
+  },
+  {
+    key: "pulses",
+    crops: [
+      { name: "Black Gram",   ta: "உளுந்து",             icon: "⚫", defaultExpected: 0.90, defaultMin: 0.75 },
+      { name: "Green Gram",   ta: "பாசிப்பருப்பு",      icon: "🟢", defaultExpected: 0.85, defaultMin: 0.70 },
+      { name: "Red Gram",     ta: "தூவரம்பருப்பு",      icon: "🔴", defaultExpected: 0.80, defaultMin: 0.65 },
+      { name: "Bengal Gram",  ta: "கடலை",                icon: "🟡", defaultExpected: 0.75, defaultMin: 0.60 },
+      { name: "Cowpea",       ta: "தட்டைப்பயறு",        icon: "🟤", defaultExpected: 0.70, defaultMin: 0.55 },
+      { name: "Horse Gram",   ta: "கொள்ளு",              icon: "🟤", defaultExpected: 0.65, defaultMin: 0.50 },
+    ]
+  },
+  {
+    key: "oilseeds",
+    crops: [
+      { name: "Groundnut",  ta: "கடலை (வேர்க்கடலை)",   icon: "🥜", defaultExpected: 0.80, defaultMin: 0.65 },
+      { name: "Sesame",     ta: "எள்",                   icon: "🌿", defaultExpected: 1.20, defaultMin: 1.00 },
+      { name: "Sunflower",  ta: "சூரியகாந்தி",          icon: "🌻", defaultExpected: 0.70, defaultMin: 0.55 },
+      { name: "Castor",     ta: "ஆமணக்கு",              icon: "🌿", defaultExpected: 0.55, defaultMin: 0.45 },
+      { name: "Mustard",    ta: "கடுகு",                 icon: "🟡", defaultExpected: 0.65, defaultMin: 0.52 },
+      { name: "Soybean",    ta: "சோயாபீன்",             icon: "🫘", defaultExpected: 0.60, defaultMin: 0.48 },
+    ]
+  },
+  {
+    key: "spices",
+    crops: [
+      { name: "Turmeric",    ta: "மஞ்சள்",              icon: "🟡", defaultExpected: 1.50, defaultMin: 1.20 },
+      { name: "Ginger",      ta: "இஞ்சி",               icon: "🫚", defaultExpected: 1.80, defaultMin: 1.50 },
+      { name: "Garlic",      ta: "பூண்டு",              icon: "🧄", defaultExpected: 2.00, defaultMin: 1.60 },
+      { name: "Coriander",   ta: "கொத்தமல்லி",          icon: "🌿", defaultExpected: 1.20, defaultMin: 0.95 },
+      { name: "Cumin",       ta: "சீரகம்",              icon: "🌿", defaultExpected: 2.50, defaultMin: 2.00 },
+      { name: "Black Pepper",ta: "மிளகு",               icon: "⚫", defaultExpected: 4.00, defaultMin: 3.20 },
+      { name: "Cardamom",    ta: "ஏலக்காய்",            icon: "🌿", defaultExpected: 8.00, defaultMin: 6.50 },
+      { name: "Clove",       ta: "கிராம்பு",            icon: "🌿", defaultExpected: 6.00, defaultMin: 5.00 },
+    ]
+  },
+  {
+    key: "commercial",
+    crops: [
+      { name: "Sugarcane",  ta: "கரும்பு",              icon: "🎋", defaultExpected: 0.08, defaultMin: 0.06 },
+      { name: "Cotton",     ta: "பருத்தி",              icon: "☁️", defaultExpected: 0.70, defaultMin: 0.55 },
+      { name: "Tobacco",    ta: "புகையிலை",             icon: "🌿", defaultExpected: 1.50, defaultMin: 1.20 },
+      { name: "Tea",        ta: "தேயிலை",               icon: "🍵", defaultExpected: 1.20, defaultMin: 0.95 },
+      { name: "Coffee",     ta: "காப்பி",               icon: "☕", defaultExpected: 2.00, defaultMin: 1.60 },
+      { name: "Rubber",     ta: "ரப்பர்",               icon: "🌲", defaultExpected: 1.30, defaultMin: 1.05 },
+      { name: "Arecanut",   ta: "பாக்கு",               icon: "🌴", defaultExpected: 3.00, defaultMin: 2.40 },
+      { name: "Cashew",     ta: "முந்திரி",             icon: "🥜", defaultExpected: 4.00, defaultMin: 3.20 },
+    ]
+  },
+];
+
+// Validates that an approval URL points to the trusted PayPal Sandbox checkout domain
+function isValidPayPalSandboxUrl(urlStr) {
+  try {
+    const parsed = new URL(urlStr);
+    if (parsed.protocol !== 'https:') return false;
+    const hostname = parsed.hostname.toLowerCase();
+    return hostname === 'sandbox.paypal.com' || hostname === 'www.sandbox.paypal.com';
+  } catch (e) {
+    return false;
+  }
+}
+
 export default function App() {
   const [lang, setLang] = useState('ta');
   const t = translations[lang] || translations.en;
@@ -24,6 +147,8 @@ export default function App() {
   const [role, setRole] = useState('farmer'); // 'farmer', 'buyer', 'operator'
   const [loading, setLoading] = useState(false);
   const [demoBanner, setDemoBanner] = useState(null);
+  const [paymentBanner, setPaymentBanner] = useState(null);
+  const captureAttemptedRef = useRef(false);
 
   // Listing Form State
   const [selectedCrop, setSelectedCrop] = useState(CROPS[0]);
@@ -105,6 +230,97 @@ export default function App() {
     
     refreshData();
   }, [lang]);
+
+  // Handle return from PayPal Sandbox after buyer approval or cancellation
+  useEffect(() => {
+    try {
+      const currentUrl = new URL(window.location.href);
+      const isSuccessReturn = currentUrl.pathname.includes('/checkout/success') || currentUrl.searchParams.has('PayerID');
+      const isCancelReturn = currentUrl.pathname.includes('/checkout/cancel') || currentUrl.searchParams.get('cancel') === 'true';
+
+      const orderIdParam = currentUrl.searchParams.get('order_id');
+      const tokenParam = currentUrl.searchParams.get('token') || currentUrl.searchParams.get('paypal_order_id');
+
+      if (isSuccessReturn || isCancelReturn) {
+        // Clean URL to prevent duplicate actions on page refresh
+        window.history.replaceState({}, '', window.location.origin + window.location.pathname.replace(/\/checkout\/(success|cancel)/, ''));
+      }
+
+      if (isCancelReturn) {
+        sessionStorage.removeItem("hl_pending_payment");
+        setPaymentBanner({
+          type: 'info',
+          message: t.paypal_payment_cancelled || "PayPal checkout was cancelled by the buyer. No funds were captured."
+        });
+        return;
+      }
+
+      if (isSuccessReturn) {
+        const storedPending = JSON.parse(sessionStorage.getItem("hl_pending_payment") || "null");
+        const targetOrderId = orderIdParam ? parseInt(orderIdParam, 10) : (storedPending ? storedPending.orderId : null);
+        const targetPaypalId = tokenParam || (storedPending ? storedPending.paypalOrderId : null);
+
+        if (!targetOrderId || !targetPaypalId) {
+          setPaymentBanner({
+            type: 'error',
+            message: "Missing order or payment token in PayPal return. Cannot verify capture."
+          });
+          return;
+        }
+
+        // Prevent duplicate capture attempts and accidental automatic retries
+        const captureKey = `hl_captured_${targetPaypalId}`;
+        if (sessionStorage.getItem(captureKey) || captureAttemptedRef.current) {
+          return;
+        }
+
+        captureAttemptedRef.current = true;
+        sessionStorage.setItem(captureKey, "processing");
+
+        executeCapture(targetOrderId, targetPaypalId, captureKey);
+      }
+    } catch (err) {
+      console.error("Error inspecting PayPal return parameters", err);
+    }
+  }, []);
+
+  const executeCapture = async (orderId, paypalOrderId, captureKey) => {
+    setLoading(true);
+    setPaymentBanner({
+      type: 'loading',
+      message: t.paypal_verifying_capture || "Buyer approved on PayPal. Securely verifying and capturing payment with backend..."
+    });
+
+    try {
+      const paymentRecord = await api.capturePayPalOrder(orderId, paypalOrderId);
+
+      // Do not treat returning to website as proof of payment - verify backend status
+      if (paymentRecord && paymentRecord.status === 'completed') {
+        sessionStorage.setItem(captureKey, "completed");
+        sessionStorage.removeItem("hl_pending_payment");
+        setPaymentBanner({
+          type: 'success',
+          message: `${t.paypal_payment_success || "Payment successfully captured and verified!"} (Capture ID: ${paymentRecord.paypal_capture_id || "verified"}). Order #${orderId} is now processing.`
+        });
+      } else {
+        sessionStorage.setItem(captureKey, "failed");
+        setPaymentBanner({
+          type: 'error',
+          message: `Payment verification failed: processor returned status '${paymentRecord?.status || "unverified"}'. Order remains unpaid.`
+        });
+      }
+      await refreshData();
+    } catch (err) {
+      sessionStorage.setItem(captureKey, "failed");
+      setPaymentBanner({
+        type: 'error',
+        message: `${t.paypal_payment_failed || "Payment capture failed"}: ${err.message || "Backend rejected capture"}. Order remains unpaid.`
+      });
+      await refreshData();
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const refreshData = async () => {
     try {
@@ -271,14 +487,58 @@ export default function App() {
   // PayPal Sandbox Checkout
   const handlePayPalPay = async (orderId) => {
     setLoading(true);
+    setPaymentBanner({
+      type: 'loading',
+      message: t.paypal_redirecting || "Initiating PayPal Sandbox order..."
+    });
+
     try {
       const payOrder = await api.createPayPalOrder(orderId);
-      // Capture order
-      await api.capturePayPalOrder(orderId, payOrder.paypal_order_id);
-      await refreshData();
-      alert("Payment captured and verified by backend server!");
+
+      if (!payOrder || !payOrder.approval_url) {
+        throw new Error("No approval URL returned by payment processor.");
+      }
+
+      // Check if mock mode
+      if (payOrder.is_mock) {
+        setPaymentBanner({
+          type: 'loading',
+          message: "Simulating mock payment verification..."
+        });
+        const completedPayment = await api.capturePayPalOrder(orderId, payOrder.paypal_order_id);
+        if (completedPayment && completedPayment.status === 'completed') {
+          setPaymentBanner({
+            type: 'success',
+            message: "Payment successfully verified and settled (Mock Mode)!"
+          });
+        }
+        await refreshData();
+        return;
+      }
+
+      // Real Sandbox mode: validate trusted PayPal sandbox checkout domain
+      if (!isValidPayPalSandboxUrl(payOrder.approval_url)) {
+        throw new Error(
+          t.paypal_untrusted_url || "Security Error: Untrusted PayPal approval URL rejected. Must be on sandbox.paypal.com."
+        );
+      }
+
+      // Store pending payment in sessionStorage to correlate upon return
+      sessionStorage.setItem("hl_pending_payment", JSON.stringify({
+        orderId,
+        paypalOrderId: payOrder.paypal_order_id,
+        status: "awaiting_buyer_approval",
+        timestamp: Date.now()
+      }));
+
+      // Redirect buyer to PayPal Sandbox approval URL
+      window.location.href = payOrder.approval_url;
     } catch (e) {
-      alert("Payment processing failed");
+      console.error("PayPal order creation error:", e);
+      setPaymentBanner({
+        type: 'error',
+        message: `${t.paypal_payment_failed || "Payment failed"}: ${e.message || "Processor error"}`
+      });
     } finally {
       setLoading(false);
     }
@@ -389,6 +649,32 @@ export default function App() {
               <span>{demoBanner}</span>
             </div>
             <button onClick={() => setDemoBanner(null)} className="text-xs text-emerald-700 underline">Dismiss</button>
+          </div>
+        </div>
+      )}
+
+      {/* PayPal Sandbox Payment Status Banner */}
+      {paymentBanner && (
+        <div className="max-w-7xl mx-auto px-4 mt-4">
+          <div className={`p-4 rounded-xl border flex items-center justify-between ${
+            paymentBanner.type === 'success' ? 'bg-emerald-50 border-emerald-300 text-emerald-900' :
+            paymentBanner.type === 'error' ? 'bg-rose-50 border-rose-300 text-rose-900' :
+            paymentBanner.type === 'loading' ? 'bg-blue-50 border-blue-300 text-blue-900' :
+            'bg-amber-50 border-amber-300 text-amber-900'
+          }`}>
+            <div className="flex items-center gap-2.5 text-sm font-medium">
+              {paymentBanner.type === 'success' && <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />}
+              {paymentBanner.type === 'error' && <AlertTriangle className="w-5 h-5 text-rose-600 flex-shrink-0" />}
+              {paymentBanner.type === 'loading' && <RefreshCw className="w-5 h-5 text-blue-600 animate-spin flex-shrink-0" />}
+              {paymentBanner.type === 'info' && <Clock className="w-5 h-5 text-amber-600 flex-shrink-0" />}
+              <span>{paymentBanner.message}</span>
+            </div>
+            <button
+              onClick={() => setPaymentBanner(null)}
+              className="text-xs font-semibold underline ml-4 hover:opacity-80 flex-shrink-0"
+            >
+              Dismiss
+            </button>
           </div>
         </div>
       )}
