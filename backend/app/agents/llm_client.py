@@ -1,23 +1,44 @@
 import json
 import logging
+import re
 import httpx
 from typing import Optional, Dict, Any, List
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+def clean_llm_json_content(content: str) -> str:
+    """
+    Strips <think>...</think> blocks and surrounding markdown code fences
+    (e.g. ```json ... ```) from LLM output before JSON parsing.
+    """
+    if not content:
+        return ""
+    cleaned = content.strip()
+    # Strip <think>...</think> block if present
+    cleaned = re.sub(r"(?s)<think>.*?</think>", "", cleaned).strip()
+    # Strip markdown code fences if wrapped in ```json ... ``` or ``` ... ```
+    fence_match = re.search(r"```(?:json)?\s*(\{[\s\S]*\})\s*```", cleaned, flags=re.IGNORECASE)
+    if fence_match:
+        cleaned = fence_match.group(1).strip()
+    elif cleaned.startswith("```"):
+        cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r"\s*```$", "", cleaned)
+        cleaned = cleaned.strip()
+    return cleaned
+
 class LLMClient:
     """
     Plain HTTPS client for OpenAI-compatible chat completion endpoints (e.g. Groq).
     Uses httpx directly without any external SDK.
-    Timeout: 8 seconds. At most 1 retry.
+    Timeout: 15 seconds. At most 1 retry.
     """
     def __init__(
         self,
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
         model: Optional[str] = None,
-        timeout: float = 8.0,
+        timeout: float = 15.0,
         max_retries: int = 1
     ):
         self.api_key = api_key if api_key is not None else settings.LLM_API_KEY
@@ -71,16 +92,20 @@ class LLMClient:
                         if not content:
                             return None
 
+                        cleaned_content = clean_llm_json_content(content)
+                        if not cleaned_content:
+                            return None
+
                         # Parse JSON content
                         try:
-                            parsed_json = json.loads(content)
+                            parsed_json = json.loads(cleaned_content)
                             if isinstance(parsed_json, dict):
                                 return parsed_json
                             else:
                                 logger.warning("LLM output is not a JSON object.")
                                 return None
-                        except (json.JSONDecodeError, TypeError):
-                            logger.warning("LLM output was not valid JSON.")
+                        except (json.JSONDecodeError, TypeError) as e:
+                            logger.warning(f"LLM output was not valid JSON: {type(e).__name__}")
                             return None
                     else:
                         logger.warning(f"LLM request returned HTTP status {resp.status_code} (attempt {attempts}/{max_attempts})")

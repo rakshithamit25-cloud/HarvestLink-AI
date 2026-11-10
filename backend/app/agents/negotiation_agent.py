@@ -1,9 +1,12 @@
 import time
+import logging
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.agents.state import HarvestLinkState
 from app.models import AgentLog, MatchResult, BuyerRequirement
 from app.agents.llm_client import LLMClient
+
+logger = logging.getLogger(__name__)
 
 class NegotiationSuggestion(BaseModel):
     suggested_price: float
@@ -15,6 +18,7 @@ def run_negotiation_agent(state: HarvestLinkState, db: Session) -> HarvestLinkSt
     
     llm_client = LLMClient()
     llm_calls_succeeded = 0
+    fallback_reasons: list[str] = []
     results = []
 
     for prop in state.get("proposals", []):
@@ -51,7 +55,7 @@ def run_negotiation_agent(state: HarvestLinkState, db: Session) -> HarvestLinkSt
                     "role": "system",
                     "content": (
                         "You are an agricultural price negotiation assistant. "
-                        "Suggest a mutually fair price strictly within the farmer's minimum floor and the buyer's maximum ceiling. "
+                        "Suggest a price within the farmer's minimum and the buyer's maximum. "
                         "Return a JSON object with keys 'suggested_price' (float) and 'rationale' (string)."
                     )
                 },
@@ -72,8 +76,15 @@ def run_negotiation_agent(state: HarvestLinkState, db: Session) -> HarvestLinkSt
                         suggested = round(parsed.suggested_price, 2)
                         terms_note = f"AI Suggested ${suggested:.2f}/kg (bounded between ${farmer_min:.2f}-${buyer_max:.2f}): {parsed.rationale}"
                         llm_calls_succeeded += 1
-                except Exception:
-                    pass
+                    else:
+                        logger.warning(
+                            f"Negotiation Agent price out of bounds: suggested {parsed.suggested_price} "
+                            f"outside limits [{farmer_min}, {buyer_max}] (price out of bounds)"
+                        )
+                        fallback_reasons.append("fallback: price out of bounds")
+                except Exception as e:
+                    logger.warning(f"Negotiation Agent validation failed: {type(e).__name__} (invalid schema)")
+                    fallback_reasons.append("fallback: invalid schema")
 
         prop["ai_suggested_price"] = suggested
         prop["match_reason"] += f" | Negotiation: {terms_note}"
@@ -100,6 +111,9 @@ def run_negotiation_agent(state: HarvestLinkState, db: Session) -> HarvestLinkSt
     duration_ms = int((time.time() - start_time) * 1000)
     input_sum = f"Proposals: {len(state.get('proposals', []))}, Farmer Min: ${state['minimum_price']}"
     output_sum = f"Negotiated suggested terms for {len(results)} deals within mutually acceptable boundaries."
+    if mode == "rule-based fallback" and fallback_reasons:
+        reasons_str = ", ".join(dict.fromkeys(fallback_reasons))
+        output_sum = f"{output_sum} ({reasons_str})"
 
     agent_log = AgentLog(
         agent_name="Negotiation Agent",

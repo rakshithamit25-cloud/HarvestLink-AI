@@ -1,4 +1,5 @@
 import time
+import logging
 from typing import Optional
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -6,6 +7,8 @@ from app.agents.state import HarvestLinkState, BuyerCandidate
 from app.models import BuyerRequirement, AgentLog
 from app.core.geo import calculate_approx_distance_km
 from app.agents.llm_client import LLMClient
+
+logger = logging.getLogger(__name__)
 
 class DemandDiscoveryExplanation(BaseModel):
     summary: str
@@ -80,8 +83,10 @@ def run_demand_discovery(state: HarvestLinkState, db: Session) -> HarvestLinkSta
                 validated = DemandDiscoveryExplanation(**llm_resp)
                 mode = "LLM"
                 output_sum = f"{base_summary} AI Demand: {validated.demand_level.upper()} - {validated.summary}"
-            except Exception:
+            except Exception as e:
+                logger.warning(f"Demand Discovery validation failed: {type(e).__name__} (invalid schema)")
                 mode = "rule-based fallback"
+                output_sum = f"{base_summary} (fallback: invalid schema)"
 
     duration_ms = int((time.time() - start_time) * 1000)
     input_sum = f"Crop: {state['crop_name']}, Qty: {state['quantity']} kg, Asking: ${state['expected_price']}, Min: ${state['minimum_price']}"

@@ -1,10 +1,13 @@
 import time
+import logging
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.agents.state import HarvestLinkState, MatchProposal
 from app.models import AgentLog, MatchResult, ProduceListing
 from app.services.inventory_service import InventoryService, InsufficientStockException
 from app.agents.llm_client import LLMClient
+
+logger = logging.getLogger(__name__)
 
 class MatchingExplanation(BaseModel):
     rationale: str
@@ -120,8 +123,10 @@ def run_matching_agent(state: HarvestLinkState, db: Session) -> HarvestLinkState
                 validated = MatchingExplanation(**llm_resp)
                 mode = "LLM"
                 output_sum = f"{base_summary} AI Note: {validated.rationale}"
-            except Exception:
+            except Exception as e:
+                logger.warning(f"Matching Agent validation failed: {type(e).__name__} (invalid schema)")
                 mode = "rule-based fallback"
+                output_sum = f"{base_summary} (fallback: invalid schema)"
 
     duration_ms = int((time.time() - start_time) * 1000)
     input_sum = f"Stock: {state['quantity']} kg, Candidates: {len(state.get('candidates', []))}"

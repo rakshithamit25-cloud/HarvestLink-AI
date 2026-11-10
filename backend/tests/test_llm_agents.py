@@ -409,3 +409,186 @@ def test_negotiation_agent_fallback_on_unconfigured(db_session, agent_test_data)
 
         db_log = db_session.query(AgentLog).filter(AgentLog.agent_name == "Negotiation Agent").order_by(AgentLog.id.desc()).first()
         assert db_log.mode == "rule-based fallback"
+
+
+# ---------------------------------------------------------------------------
+# Task 3b Hardening Tests
+# ---------------------------------------------------------------------------
+
+def test_llm_client_default_timeout_is_15s():
+    client = LLMClient()
+    assert client.timeout == 15.0
+
+
+def test_llm_client_markdown_fenced_json_parses():
+    client = LLMClient(api_key="mock-key", model="mock-model")
+
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_resp.json.return_value = {
+        "choices": [
+            {
+                "message": {
+                    "content": "```json\n{\"summary\": \"High demand in Salem\", \"demand_level\": \"high\"}\n```"
+                }
+            }
+        ]
+    }
+
+    with patch("httpx.Client.post", return_value=mock_resp):
+        result = client.chat_completion_json([{"role": "user", "content": "test"}])
+        assert result == {"summary": "High demand in Salem", "demand_level": "high"}
+
+
+def test_llm_client_think_block_before_json_parses():
+    client = LLMClient(api_key="mock-key", model="mock-model")
+
+    mock_resp = MagicMock()
+    mock_resp.status_code = 200
+    mock_resp.json.return_value = {
+        "choices": [
+            {
+                "message": {
+                    "content": "<think>Let us consider the demand carefully.\nEverything looks positive.</think>\n```json\n{\"summary\": \"High demand in Salem\", \"demand_level\": \"high\"}\n```"
+                }
+            }
+        ]
+    }
+
+    with patch("httpx.Client.post", return_value=mock_resp):
+        result = client.chat_completion_json([{"role": "user", "content": "test"}])
+        assert result == {"summary": "High demand in Salem", "demand_level": "high"}
+
+
+def test_demand_discovery_agent_logs_fallback_reason_on_invalid_schema(db_session, agent_test_data):
+    listing, req, state = agent_test_data
+
+    with patch.object(LLMClient, "is_configured", return_value=True), \
+         patch.object(LLMClient, "chat_completion_json", return_value={"wrong_key": "val"}):
+        out_state = run_demand_discovery(state, db_session)
+
+        log = out_state["agent_logs"][-1]
+        assert log["mode"] == "rule-based fallback"
+        assert "fallback: invalid schema" in log["summary"]
+
+        db_log = db_session.query(AgentLog).filter(AgentLog.agent_name == "Demand Discovery Agent").order_by(AgentLog.id.desc()).first()
+        assert db_log.mode == "rule-based fallback"
+        assert "fallback: invalid schema" in db_log.output_summary
+
+
+def test_matching_agent_logs_fallback_reason_on_invalid_schema(db_session, agent_test_data):
+    listing, req, state = agent_test_data
+    state["candidates"] = [{
+        "requirement_id": req.id,
+        "buyer_id": req.buyer_id,
+        "buyer_name": req.buyer_name,
+        "crop_name": req.crop_name,
+        "required_quantity": req.required_quantity,
+        "maximum_price": req.maximum_price,
+        "location": req.location,
+        "distance_km": 0.0,
+        "has_price_overlap": True,
+        "discovery_notes": "Test"
+    }]
+
+    with patch.object(LLMClient, "is_configured", return_value=True), \
+         patch.object(LLMClient, "chat_completion_json", return_value={"wrong_key": "val"}):
+        out_state = run_matching_agent(state, db_session)
+
+        log = out_state["agent_logs"][-1]
+        assert log["mode"] == "rule-based fallback"
+        assert "fallback: invalid schema" in log["summary"]
+
+        db_log = db_session.query(AgentLog).filter(AgentLog.agent_name == "Matching Agent").order_by(AgentLog.id.desc()).first()
+        assert db_log.mode == "rule-based fallback"
+        assert "fallback: invalid schema" in db_log.output_summary
+
+
+def test_negotiation_agent_logs_fallback_reason_on_price_out_of_bounds(db_session, agent_test_data):
+    listing, req, state = agent_test_data
+
+    match_rec = MatchResult(
+        listing_id=listing.id,
+        buyer_requirement_id=req.id,
+        allocated_quantity=200.0,
+        farmer_asking_price=1.00,
+        ai_suggested_price=1.10,
+        agreed_price=None,
+        match_reason="Initial allocation",
+        status="proposed"
+    )
+    db_session.add(match_rec)
+    db_session.commit()
+
+    state["proposals"] = [{
+        "buyer_requirement_id": req.id,
+        "buyer_name": req.buyer_name,
+        "allocated_quantity": 200.0,
+        "farmer_asking_price": 1.00,
+        "ai_suggested_price": 1.10,
+        "match_reason": "Initial allocation",
+        "status": "proposed"
+    }]
+
+    # Buyer max is 1.20, LLM suggests 1.50
+    llm_suggestion = {
+        "suggested_price": 1.50,
+        "rationale": "High price suggested by LLM."
+    }
+
+    with patch.object(LLMClient, "is_configured", return_value=True), \
+         patch.object(LLMClient, "chat_completion_json", return_value=llm_suggestion):
+        out_state = run_negotiation_agent(state, db_session)
+
+        log = out_state["agent_logs"][-1]
+        assert log["mode"] == "rule-based fallback"
+        assert "fallback: price out of bounds" in log["summary"]
+
+        db_log = db_session.query(AgentLog).filter(AgentLog.agent_name == "Negotiation Agent").order_by(AgentLog.id.desc()).first()
+        assert db_log.mode == "rule-based fallback"
+        assert "fallback: price out of bounds" in db_log.output_summary
+
+
+def test_negotiation_agent_logs_fallback_reason_on_invalid_schema(db_session, agent_test_data):
+    listing, req, state = agent_test_data
+
+    match_rec = MatchResult(
+        listing_id=listing.id,
+        buyer_requirement_id=req.id,
+        allocated_quantity=200.0,
+        farmer_asking_price=1.00,
+        ai_suggested_price=1.10,
+        agreed_price=None,
+        match_reason="Initial allocation",
+        status="proposed"
+    )
+    db_session.add(match_rec)
+    db_session.commit()
+
+    state["proposals"] = [{
+        "buyer_requirement_id": req.id,
+        "buyer_name": req.buyer_name,
+        "allocated_quantity": 200.0,
+        "farmer_asking_price": 1.00,
+        "ai_suggested_price": 1.10,
+        "match_reason": "Initial allocation",
+        "status": "proposed"
+    }]
+
+    # Missing suggested_price
+    llm_suggestion = {
+        "wrong_field": "val",
+        "rationale": "No suggested price."
+    }
+
+    with patch.object(LLMClient, "is_configured", return_value=True), \
+         patch.object(LLMClient, "chat_completion_json", return_value=llm_suggestion):
+        out_state = run_negotiation_agent(state, db_session)
+
+        log = out_state["agent_logs"][-1]
+        assert log["mode"] == "rule-based fallback"
+        assert "fallback: invalid schema" in log["summary"]
+
+        db_log = db_session.query(AgentLog).filter(AgentLog.agent_name == "Negotiation Agent").order_by(AgentLog.id.desc()).first()
+        assert db_log.mode == "rule-based fallback"
+        assert "fallback: invalid schema" in db_log.output_summary
