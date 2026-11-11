@@ -89,19 +89,44 @@ class PayPalService:
             )
 
         frontend_base = settings.FRONTEND_URL.split(",")[0].strip()
-        if existing_payment and existing_payment.paypal_order_id:
-            approval_url = (
-                f"https://www.sandbox.paypal.com/checkoutnow?token={existing_payment.paypal_order_id}"
-                if not existing_payment.is_mock else
-                f"{frontend_base}/checkout?order_id={order.id}&paypal_order_id={existing_payment.paypal_order_id}&mock=true"
-            )
-            return existing_payment, approval_url
+        is_mock_flow = PayPalService._is_mock()
+
+        # Check if existing order can be safely reused
+        if existing_payment and existing_payment.paypal_order_id and existing_payment.status != "failed" and existing_payment.is_mock == is_mock_flow:
+            if is_mock_flow:
+                approval_url = f"{frontend_base}/checkout?order_id={order.id}&paypal_order_id={existing_payment.paypal_order_id}&mock=true"
+                return existing_payment, approval_url
+            else:
+                # Real Sandbox: verify order still exists on PayPal under current credentials
+                try:
+                    token = PayPalService.get_access_token()
+                    with httpx.Client(timeout=10.0) as client:
+                        chk_resp = client.get(
+                            f"{settings.PAYPAL_API_BASE_URL}/v2/checkout/orders/{existing_payment.paypal_order_id}",
+                            headers={"Authorization": f"Bearer {token}"}
+                        )
+                    if chk_resp.status_code == 200:
+                        order_data = chk_resp.json()
+                        if order_data.get("status") in ["CREATED", "APPROVED"]:
+                            approval_url = ""
+                            for link in order_data.get("links", []):
+                                if link.get("rel") == "approve":
+                                    approval_url = link.get("href")
+                                    break
+                            if not approval_url:
+                                approval_url = f"https://www.sandbox.paypal.com/checkoutnow?token={existing_payment.paypal_order_id}"
+                            return existing_payment, approval_url
+                    elif chk_resp.status_code == 404:
+                        logger.warning(
+                            f"Stored PayPal order '{existing_payment.paypal_order_id}' for HarvestLink order {order.id} "
+                            f"not found on PayPal Sandbox (HTTP 404). Likely created with previous credentials or expired. Creating fresh order."
+                        )
+                except Exception as e:
+                    logger.warning(f"Could not verify existing PayPal order status: {e}. Will create fresh order.")
 
         idempotency_key = f"HL-PAY-{order.id}-{uuid.uuid4().hex[:12]}"
         ret_url = return_url or f"{frontend_base}/checkout/success?order_id={order.id}"
         can_url = cancel_url or f"{frontend_base}/checkout/cancel?order_id={order.id}"
-        
-        is_mock_flow = PayPalService._is_mock()
         
         if is_mock_flow:
             paypal_order_id = f"MOCK-PAYPAL-{uuid.uuid4().hex[:12].upper()}"
@@ -332,7 +357,7 @@ class PayPalService:
         capture_headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {token}",
-            "PayPal-Request-Id": f"CAP-{payment.idempotency_key}"
+            "PayPal-Request-Id": f"CAP-{payment.idempotency_key}-{uuid.uuid4().hex[:8]}"
         }
 
         with httpx.Client(timeout=15.0) as client:
@@ -341,9 +366,55 @@ class PayPalService:
                 headers=capture_headers
             )
 
-            # Fix 2: If already captured on PayPal (422), fetch order details and verify fully
+            # Fix: Inspect 404 (Resource Not Found on configured PayPal account)
+            if capture_resp.status_code == 404:
+                payment.status = "failed"
+                order.payment_status = "failed"
+                db.commit()
+                err_name = "RESOURCE_NOT_FOUND"
+                err_issue = "INVALID_RESOURCE_ID"
+                try:
+                    err_json = capture_resp.json()
+                    err_name = err_json.get("name", err_name)
+                    details = err_json.get("details", [])
+                    if details:
+                        err_issue = details[0].get("issue", err_issue)
+                except Exception:
+                    pass
+                logger.error(
+                    f"PayPal capture failed with HTTP 404: {err_name} (issue: {err_issue}). "
+                    f"Order ID '{paypal_order_id}' was not found on configured PayPal account."
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail=f"Payment processor error: PayPal order '{paypal_order_id}' not found on configured Sandbox account."
+                )
+
+            # Fix: Handle 422 - check if unapproved by buyer or already captured
             if capture_resp.status_code == 422:
-                logger.info(f"Capture returned 422 for order {order_id}; attempting recovery via order query.")
+                err_issue = ""
+                err_name = ""
+                try:
+                    err_json = capture_resp.json()
+                    err_name = err_json.get("name", "")
+                    details = err_json.get("details", [])
+                    if details:
+                        err_issue = details[0].get("issue", "")
+                except Exception:
+                    pass
+
+                # Case: Buyer has not yet approved the order on PayPal
+                if err_issue == "ORDER_NOT_APPROVED":
+                    logger.warning(
+                        f"PayPal capture rejected with HTTP 422: ORDER_NOT_APPROVED for order {order_id} ({paypal_order_id}). "
+                        f"Buyer has not yet approved the order on PayPal."
+                    )
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Payment cannot be captured: Buyer has not yet approved the order on PayPal."
+                    )
+
+                logger.info(f"Capture returned 422 ({err_name}/{err_issue}) for order {order_id}; attempting recovery via order query.")
                 verify_resp = client.get(
                     f"{settings.PAYPAL_API_BASE_URL}/v2/checkout/orders/{paypal_order_id}",
                     headers={"Authorization": f"Bearer {token}"}
@@ -359,7 +430,19 @@ class PayPalService:
                 payment.status = "failed"
                 order.payment_status = "failed"
                 db.commit()
-                logger.error(f"PayPal capture failed with HTTP {capture_resp.status_code}")
+                err_name = "PROCESSOR_ERROR"
+                err_issue = ""
+                try:
+                    err_json = capture_resp.json()
+                    err_name = err_json.get("name", err_name)
+                    details = err_json.get("details", [])
+                    if details:
+                        err_issue = details[0].get("issue", "")
+                except Exception:
+                    pass
+                logger.error(
+                    f"PayPal capture failed with HTTP {capture_resp.status_code}: {err_name} {err_issue}".strip()
+                )
                 raise HTTPException(
                     status_code=status.HTTP_502_BAD_GATEWAY,
                     detail="Payment processor error during payment capture."

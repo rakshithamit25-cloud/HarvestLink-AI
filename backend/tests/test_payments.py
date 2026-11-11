@@ -631,3 +631,147 @@ def test_paypal_error_response_is_sanitized(db_session):
         assert exc_info.value.detail == "Payment processor error during payment capture."
 
 
+def test_capture_rejected_when_buyer_not_approved_on_paypal(db_session):
+    """When PayPal capture returns 422 ORDER_NOT_APPROVED, capture must raise HTTP 400."""
+    buyer = db_session.query(User).filter(User.role == "buyer").first()
+    order, _ = _setup_test_order_with_match(db_session, buyer, match_status="confirmed")
+    payment, _ = PayPalService.create_order(db_session, order)
+    payment.is_mock = False
+    db_session.commit()
+
+    mock_resp = MagicMock()
+    mock_resp.status_code = 422
+    mock_resp.json.return_value = {
+        "name": "UNPROCESSABLE_ENTITY",
+        "details": [{"issue": "ORDER_NOT_APPROVED", "description": "Payer has not yet approved the Order for payment."}]
+    }
+
+    with patch("httpx.Client.post", return_value=mock_resp), \
+         patch.object(PayPalService, "_is_mock", return_value=False), \
+         patch.object(PayPalService, "get_access_token", return_value="fake_token"):
+
+        with pytest.raises(HTTPException) as exc_info:
+            PayPalService.capture_and_verify(db_session, order.id, payment.paypal_order_id)
+
+        assert exc_info.value.status_code == 400
+        assert "Buyer has not yet approved the order on PayPal" in exc_info.value.detail
+        db_session.refresh(order)
+        assert order.payment_status != "completed"
+
+
+def test_paypal_capture_404_resource_not_found_handled(db_session):
+    """When PayPal capture returns 404 RESOURCE_NOT_FOUND, payment must be marked failed and raise 502."""
+    buyer = db_session.query(User).filter(User.role == "buyer").first()
+    order, _ = _setup_test_order_with_match(db_session, buyer, match_status="confirmed")
+    payment, _ = PayPalService.create_order(db_session, order)
+    payment.is_mock = False
+    db_session.commit()
+
+    mock_resp = MagicMock()
+    mock_resp.status_code = 404
+    mock_resp.json.return_value = {
+        "name": "RESOURCE_NOT_FOUND",
+        "details": [{"issue": "INVALID_RESOURCE_ID", "description": "Specified resource ID does not exist."}]
+    }
+
+    with patch("httpx.Client.post", return_value=mock_resp), \
+         patch.object(PayPalService, "_is_mock", return_value=False), \
+         patch.object(PayPalService, "get_access_token", return_value="fake_token"):
+
+        with pytest.raises(HTTPException) as exc_info:
+            PayPalService.capture_and_verify(db_session, order.id, payment.paypal_order_id)
+
+        assert exc_info.value.status_code == 502
+        assert "not found on configured Sandbox account" in exc_info.value.detail
+
+        db_session.refresh(payment)
+        db_session.refresh(order)
+        assert payment.status == "failed"
+        assert order.payment_status == "failed"
+
+
+def test_create_order_creates_fresh_order_when_stored_order_is_404(db_session):
+    """When an existing payment record has a stale PayPal order ID that 404s on PayPal, create_order creates a fresh order."""
+    buyer = db_session.query(User).filter(User.role == "buyer").first()
+    order, _ = _setup_test_order_with_match(db_session, buyer, match_status="confirmed")
+
+    # Seed an existing payment with a stale order ID
+    existing = Payment(
+        order_id=order.id,
+        paypal_order_id="OLD-STALE-ORDER-ID",
+        amount=order.total_amount,
+        currency="USD",
+        status="created",
+        is_mock=False,
+        idempotency_key=f"HL-OLD-{order.id}"
+    )
+    db_session.add(existing)
+    db_session.commit()
+
+    # Mock PayPal responses: GET returns 404, POST creates new order
+    mock_get_resp = MagicMock()
+    mock_get_resp.status_code = 404
+
+    mock_post_resp = MagicMock()
+    mock_post_resp.status_code = 201
+    mock_post_resp.json.return_value = {
+        "id": "NEW-FRESH-ORDER-ID",
+        "status": "CREATED",
+        "links": [{"href": "https://www.sandbox.paypal.com/checkoutnow?token=NEW-FRESH-ORDER-ID", "rel": "approve"}]
+    }
+
+    with patch("httpx.Client.get", return_value=mock_get_resp), \
+         patch("httpx.Client.post", return_value=mock_post_resp), \
+         patch.object(PayPalService, "_is_mock", return_value=False), \
+         patch.object(PayPalService, "get_access_token", return_value="fake_token"):
+
+        payment, approval_url = PayPalService.create_order(db_session, order)
+        assert payment.paypal_order_id == "NEW-FRESH-ORDER-ID"
+        assert "NEW-FRESH-ORDER-ID" in approval_url
+        assert payment.status == "created"
+
+
+def test_successful_paypal_sandbox_capture(db_session):
+    """Successful PayPal Sandbox capture updates payment and order records with capture ID."""
+    buyer = db_session.query(User).filter(User.role == "buyer").first()
+    order, _ = _setup_test_order_with_match(db_session, buyer, match_status="confirmed")
+    payment, _ = PayPalService.create_order(db_session, order)
+    payment.is_mock = False
+    db_session.commit()
+
+    mock_resp = MagicMock()
+    mock_resp.status_code = 201
+    mock_resp.json.return_value = {
+        "id": payment.paypal_order_id,
+        "status": "COMPLETED",
+        "purchase_units": [
+            {
+                "payments": {
+                    "captures": [
+                        {
+                            "id": "CAP-TEST-REAL-12345",
+                            "status": "COMPLETED",
+                            "amount": {
+                                "value": f"{order.total_amount:.2f}",
+                                "currency_code": "USD"
+                            }
+                        }
+                    ]
+                }
+            }
+        ]
+    }
+
+    with patch("httpx.Client.post", return_value=mock_resp), \
+         patch.object(PayPalService, "_is_mock", return_value=False), \
+         patch.object(PayPalService, "get_access_token", return_value="fake_token"):
+
+        result = PayPalService.capture_and_verify(db_session, order.id, payment.paypal_order_id)
+        assert result.status == "completed"
+        assert result.paypal_capture_id == "CAP-TEST-REAL-12345"
+
+        db_session.refresh(order)
+        assert order.payment_status == "completed"
+        assert order.order_status == "processing"
+
+
