@@ -88,23 +88,24 @@ class PayPalService:
                 detail=f"Payment creation is permitted only after both farmer and buyer approvals. Deal status is '{order.match.status}'."
             )
 
+        frontend_base = settings.FRONTEND_URL.split(",")[0].strip()
         if existing_payment and existing_payment.paypal_order_id:
             approval_url = (
                 f"https://www.sandbox.paypal.com/checkoutnow?token={existing_payment.paypal_order_id}"
                 if not existing_payment.is_mock else
-                f"{settings.FRONTEND_URL}/checkout?order_id={order.id}&paypal_order_id={existing_payment.paypal_order_id}&mock=true"
+                f"{frontend_base}/checkout?order_id={order.id}&paypal_order_id={existing_payment.paypal_order_id}&mock=true"
             )
             return existing_payment, approval_url
 
         idempotency_key = f"HL-PAY-{order.id}-{uuid.uuid4().hex[:12]}"
-        ret_url = return_url or f"{settings.FRONTEND_URL}/checkout/success?order_id={order.id}"
-        can_url = cancel_url or f"{settings.FRONTEND_URL}/checkout/cancel?order_id={order.id}"
+        ret_url = return_url or f"{frontend_base}/checkout/success?order_id={order.id}"
+        can_url = cancel_url or f"{frontend_base}/checkout/cancel?order_id={order.id}"
         
         is_mock_flow = PayPalService._is_mock()
         
         if is_mock_flow:
             paypal_order_id = f"MOCK-PAYPAL-{uuid.uuid4().hex[:12].upper()}"
-            approval_url = f"{settings.FRONTEND_URL}/checkout?order_id={order.id}&paypal_order_id={paypal_order_id}&mock=true"
+            approval_url = f"{frontend_base}/checkout?order_id={order.id}&paypal_order_id={paypal_order_id}&mock=true"
             
             payment = existing_payment or Payment(order_id=order.id)
             payment.paypal_order_id = paypal_order_id

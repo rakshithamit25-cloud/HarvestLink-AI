@@ -29,7 +29,10 @@ class Settings:
     DEMO_MODE: bool = os.getenv("DEMO_MODE", "false").lower() == "true"
     
     # URLs
-    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    FRONTEND_URL: str = os.getenv(
+        "FRONTEND_URL",
+        "http://localhost:5173,http://localhost:5174,http://127.0.0.1:5173,http://127.0.0.1:5174"
+    )
     BACKEND_URL: str = os.getenv("BACKEND_URL", "http://localhost:8000")
 
 settings = Settings()

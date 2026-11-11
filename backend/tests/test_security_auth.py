@@ -107,5 +107,11 @@ def test_cors_rejects_unlisted_origin():
     assert "*" not in allowed_origins, "Wildcard '*' origin is strictly forbidden"
     assert "https://evil-unlisted-origin.com" not in allowed_origins
     
+    # Verify required local origins are permitted
+    assert "http://localhost:5173" in allowed_origins
+    assert "http://localhost:5174" in allowed_origins
+    assert "http://127.0.0.1:5173" in allowed_origins
+    assert "http://127.0.0.1:5174" in allowed_origins
+    
     expected_origins = [url.strip() for url in settings.FRONTEND_URL.split(",") if url.strip()]
     assert set(allowed_origins) == set(expected_origins)
