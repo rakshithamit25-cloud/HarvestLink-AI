@@ -27,6 +27,7 @@ class Settings:
     
     # Demo Mode
     DEMO_MODE: bool = os.getenv("DEMO_MODE", "false").lower() == "true"
+    OTP_DEMO_MODE: bool = os.getenv("OTP_DEMO_MODE", "false").lower() == "true"
     
     # URLs
     FRONTEND_URL: str = os.getenv(

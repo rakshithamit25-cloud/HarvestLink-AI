@@ -103,11 +103,65 @@ export const api = {
     const data = await res.json();
     if (data.access_token) {
       sessionStorage.setItem("hl_buyer_token", data.access_token);
+      sessionStorage.setItem("hl_auth_token", data.access_token);
+      if (data.user) {
+        sessionStorage.setItem("hl_user", JSON.stringify(data.user));
+      }
     }
     return data;
   },
+
+  // Mobile OTP Authentication
+  requestOTP: async (phone) => {
+    const res = await fetch(`${API_BASE}/auth/otp/request`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.detail || "Failed to request OTP");
+    }
+    return data;
+  },
+
+  verifyOTP: async (phone, otp) => {
+    const res = await fetch(`${API_BASE}/auth/otp/verify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, otp })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.detail || "Failed to verify OTP");
+    }
+    if (data.access_token) {
+      sessionStorage.setItem("hl_buyer_token", data.access_token);
+      sessionStorage.setItem("hl_auth_token", data.access_token);
+      if (data.user) {
+        sessionStorage.setItem("hl_user", JSON.stringify(data.user));
+      }
+    }
+    return data;
+  },
+
+  logout: () => {
+    sessionStorage.removeItem("hl_buyer_token");
+    sessionStorage.removeItem("hl_auth_token");
+    sessionStorage.removeItem("hl_user");
+  },
+
+  getStoredUser: () => {
+    try {
+      const u = sessionStorage.getItem("hl_user");
+      return u ? JSON.parse(u) : null;
+    } catch (e) {
+      return null;
+    }
+  },
+
   ensureBuyerAuth: async () => {
-    let token = sessionStorage.getItem("hl_buyer_token");
+    let token = sessionStorage.getItem("hl_buyer_token") || sessionStorage.getItem("hl_auth_token");
     if (!token) {
       try {
         const authData = await api.login("restaurant_a@harvestlink.org", "buyer123");

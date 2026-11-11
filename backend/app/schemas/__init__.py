@@ -24,6 +24,20 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
     user: UserResponse
 
+class OTPRequest(BaseModel):
+    phone: str
+
+class OTPRequestResponse(BaseModel):
+    message: str
+    delivery: str = "demo-not-sent"
+    demo_otp: Optional[str] = None
+    expires_in_seconds: int = 300
+    cooldown_seconds: int = 30
+
+class OTPVerifyRequest(BaseModel):
+    phone: str
+    otp: str
+
 # Listings
 class ProduceListingCreate(BaseModel):
     crop_name: str
