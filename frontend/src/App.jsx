@@ -4,129 +4,89 @@ import { api } from './api';
 import { 
   Mic, MicOff, Volume2, ShieldCheck, CheckCircle2, Clock, AlertTriangle, 
   RefreshCw, Play, ArrowRight, DollarSign, Package, ShoppingCart, UserCheck, 
-  MapPin, Sparkles, Building2, Store, Factory, HelpCircle, Layers
+  MapPin, Sparkles, Building2, Store, Factory, HelpCircle, Layers, Search, X
 } from 'lucide-react';
 
-// 6 Picture-based crop cards
-const CROPS = [
-  { name: "Tomato", ta: "தக்காளி", icon: "🍅", defaultExpected: 1.00, defaultMin: 0.90 },
-  { name: "Onion", ta: "வெங்காயம்", icon: "🧅", defaultExpected: 0.80, defaultMin: 0.70 },
-  { name: "Brinjal", ta: "கத்தரிக்காய்", icon: "🍆", defaultExpected: 0.60, defaultMin: 0.50 },
-  { name: "Potato", ta: "உருளைக்கிழங்கு", icon: "🥔", defaultExpected: 0.70, defaultMin: 0.60 },
-  { name: "Banana", ta: "வாழைப்பழம்", icon: "🍌", defaultExpected: 0.50, defaultMin: 0.40 },
-  { name: "Chilli", ta: "மிளகாய்", icon: "🌶️", defaultExpected: 1.50, defaultMin: 1.20 }
-];
-
-// Full crop catalogue with categories (Browse All Crops)
+// Categories: vegetables, fruits, pulses and grains, spices, others (30+ common Tamil Nadu crops)
 const ALL_CROP_CATEGORIES = [
   {
     key: "vegetables",
+    labelKey: "crop_category_vegetables",
     crops: [
       { name: "Tomato",       ta: "தக்காளி",            icon: "🍅", defaultExpected: 1.00, defaultMin: 0.90 },
       { name: "Onion",        ta: "வெங்காயம்",           icon: "🧅", defaultExpected: 0.80, defaultMin: 0.70 },
       { name: "Brinjal",      ta: "கத்தரிக்காய்",        icon: "🍆", defaultExpected: 0.60, defaultMin: 0.50 },
       { name: "Potato",       ta: "உருளைக்கிழங்கு",      icon: "🥔", defaultExpected: 0.70, defaultMin: 0.60 },
       { name: "Chilli",       ta: "மிளகாய்",             icon: "🌶️", defaultExpected: 1.50, defaultMin: 1.20 },
+      { name: "Okra",         ta: "வெண்டைக்காய்",        icon: "🌿", defaultExpected: 0.90, defaultMin: 0.75 },
       { name: "Carrot",       ta: "கேரட்",               icon: "🥕", defaultExpected: 1.20, defaultMin: 1.00 },
       { name: "Cabbage",      ta: "முட்டைக்கோஸ்",        icon: "🥬", defaultExpected: 0.50, defaultMin: 0.40 },
       { name: "Cauliflower",  ta: "காலிஃபிளவர்",         icon: "🥦", defaultExpected: 0.70, defaultMin: 0.60 },
-      { name: "Okra",         ta: "வெண்டைக்காய்",        icon: "🌿", defaultExpected: 0.90, defaultMin: 0.75 },
-      { name: "Cucumber",     ta: "வெள்ளரிக்காய்",       icon: "🥒", defaultExpected: 0.60, defaultMin: 0.50 },
-      { name: "Pumpkin",      ta: "பூசணிக்காய்",         icon: "🎃", defaultExpected: 0.40, defaultMin: 0.30 },
-      { name: "Bitter Gourd", ta: "பாகற்காய்",           icon: "🥝", defaultExpected: 0.80, defaultMin: 0.65 },
-      { name: "Bottle Gourd", ta: "சுரைக்காய்",          icon: "🫙", defaultExpected: 0.45, defaultMin: 0.35 },
       { name: "Beans",        ta: "பீன்ஸ்",              icon: "🫘", defaultExpected: 1.10, defaultMin: 0.90 },
       { name: "Drumstick",    ta: "முருங்கைக்காய்",      icon: "🌱", defaultExpected: 1.00, defaultMin: 0.80 },
+      { name: "Bitter Gourd", ta: "பாகற்காய்",           icon: "🥝", defaultExpected: 0.80, defaultMin: 0.65 },
+      { name: "Pumpkin",      ta: "பூசணிக்காய்",         icon: "🎃", defaultExpected: 0.40, defaultMin: 0.30 },
+      { name: "Cucumber",     ta: "வெள்ளரிக்காய்",       icon: "🥒", defaultExpected: 0.60, defaultMin: 0.50 },
       { name: "Radish",       ta: "முள்ளங்கி",           icon: "🫚", defaultExpected: 0.50, defaultMin: 0.40 },
       { name: "Beetroot",     ta: "பீட்ரூட்",            icon: "🫀", defaultExpected: 0.70, defaultMin: 0.55 },
-      { name: "Spinach",      ta: "கீரை",                icon: "🌿", defaultExpected: 0.80, defaultMin: 0.60 },
-      { name: "Capsicum",     ta: "குடைமிளகாய்",         icon: "🫑", defaultExpected: 1.30, defaultMin: 1.10 },
-      { name: "Green Peas",   ta: "பட்டாணி",             icon: "🟢", defaultExpected: 1.50, defaultMin: 1.20 },
     ]
   },
   {
     key: "fruits",
+    labelKey: "crop_category_fruits",
     crops: [
+      { name: "Coconut",      ta: "தேங்காய்",             icon: "🥥", defaultExpected: 0.20, defaultMin: 0.15 },
       { name: "Banana",       ta: "வாழைப்பழம்",          icon: "🍌", defaultExpected: 0.50, defaultMin: 0.40 },
       { name: "Mango",        ta: "மாம்பழம்",             icon: "🥭", defaultExpected: 1.50, defaultMin: 1.20 },
       { name: "Papaya",       ta: "பப்பாளி",              icon: "🍈", defaultExpected: 0.60, defaultMin: 0.50 },
       { name: "Guava",        ta: "கொய்யா",               icon: "🍏", defaultExpected: 0.80, defaultMin: 0.65 },
+      { name: "Pomegranate",  ta: "மாதுளை",               icon: "🍎", defaultExpected: 1.80, defaultMin: 1.50 },
       { name: "Watermelon",   ta: "தர்பூசணி",             icon: "🍉", defaultExpected: 0.30, defaultMin: 0.25 },
-      { name: "Muskmelon",    ta: "கஸ்தூரி மாம்பழம்",    icon: "🍈", defaultExpected: 0.50, defaultMin: 0.40 },
       { name: "Pineapple",    ta: "அன்னாசி",              icon: "🍍", defaultExpected: 0.70, defaultMin: 0.55 },
       { name: "Grapes",       ta: "திராட்சை",             icon: "🍇", defaultExpected: 1.20, defaultMin: 1.00 },
-      { name: "Pomegranate",  ta: "மாதுளை",               icon: "🍎", defaultExpected: 1.80, defaultMin: 1.50 },
-      { name: "Orange",       ta: "ஆரஞ்சு",               icon: "🍊", defaultExpected: 1.00, defaultMin: 0.80 },
       { name: "Lemon",        ta: "எலுமிச்சை",            icon: "🍋", defaultExpected: 1.20, defaultMin: 1.00 },
-      { name: "Jackfruit",    ta: "பலாப்பழம்",            icon: "🍈", defaultExpected: 0.40, defaultMin: 0.30 },
-      { name: "Sapota",       ta: "சப்போட்டா",            icon: "🟤", defaultExpected: 0.90, defaultMin: 0.70 },
-      { name: "Coconut",      ta: "தேங்காய்",             icon: "🥥", defaultExpected: 0.20, defaultMin: 0.15 },
     ]
   },
   {
-    key: "cereals",
+    key: "pulses_grains",
+    labelKey: "crop_category_pulses_grains",
     crops: [
-      { name: "Rice",           ta: "அரிசி",             icon: "🌾", defaultExpected: 0.40, defaultMin: 0.35 },
-      { name: "Wheat",          ta: "கோதுமை",            icon: "🌾", defaultExpected: 0.35, defaultMin: 0.30 },
-      { name: "Maize",          ta: "மக்காச்சோளம்",      icon: "🌽", defaultExpected: 0.25, defaultMin: 0.20 },
-      { name: "Sorghum",        ta: "சோளம்",             icon: "🌾", defaultExpected: 0.22, defaultMin: 0.18 },
-      { name: "Pearl Millet",   ta: "கம்பு",             icon: "🌾", defaultExpected: 0.28, defaultMin: 0.22 },
-      { name: "Finger Millet",  ta: "ராகி",              icon: "🌾", defaultExpected: 0.30, defaultMin: 0.25 },
-      { name: "Foxtail Millet", ta: "தினை",              icon: "🌾", defaultExpected: 0.35, defaultMin: 0.28 },
-      { name: "Little Millet",  ta: "சாமை",              icon: "🌾", defaultExpected: 0.40, defaultMin: 0.32 },
-      { name: "Barnyard Millet",ta: "குதிரைவாலி",        icon: "🌾", defaultExpected: 0.45, defaultMin: 0.36 },
-      { name: "Kodo Millet",    ta: "வரகு",              icon: "🌾", defaultExpected: 0.38, defaultMin: 0.30 },
-    ]
-  },
-  {
-    key: "pulses",
-    crops: [
+      { name: "Rice",         ta: "அரிசி",               icon: "🌾", defaultExpected: 0.40, defaultMin: 0.35 },
+      { name: "Maize",        ta: "மக்காச்சோளம்",        icon: "🌽", defaultExpected: 0.25, defaultMin: 0.20 },
+      { name: "Groundnut",    ta: "கடலை (வேர்க்கடலை)",   icon: "🥜", defaultExpected: 0.80, defaultMin: 0.65 },
       { name: "Black Gram",   ta: "உளுந்து",             icon: "⚫", defaultExpected: 0.90, defaultMin: 0.75 },
-      { name: "Green Gram",   ta: "பாசிப்பருப்பு",      icon: "🟢", defaultExpected: 0.85, defaultMin: 0.70 },
-      { name: "Red Gram",     ta: "தூவரம்பருப்பு",      icon: "🔴", defaultExpected: 0.80, defaultMin: 0.65 },
-      { name: "Bengal Gram",  ta: "கடலை",                icon: "🟡", defaultExpected: 0.75, defaultMin: 0.60 },
-      { name: "Cowpea",       ta: "தட்டைப்பயறு",        icon: "🟤", defaultExpected: 0.70, defaultMin: 0.55 },
-      { name: "Horse Gram",   ta: "கொள்ளு",              icon: "🟤", defaultExpected: 0.65, defaultMin: 0.50 },
-    ]
-  },
-  {
-    key: "oilseeds",
-    crops: [
-      { name: "Groundnut",  ta: "கடலை (வேர்க்கடலை)",   icon: "🥜", defaultExpected: 0.80, defaultMin: 0.65 },
-      { name: "Sesame",     ta: "எள்",                   icon: "🌿", defaultExpected: 1.20, defaultMin: 1.00 },
-      { name: "Sunflower",  ta: "சூரியகாந்தி",          icon: "🌻", defaultExpected: 0.70, defaultMin: 0.55 },
-      { name: "Castor",     ta: "ஆமணக்கு",              icon: "🌿", defaultExpected: 0.55, defaultMin: 0.45 },
-      { name: "Mustard",    ta: "கடுகு",                 icon: "🟡", defaultExpected: 0.65, defaultMin: 0.52 },
-      { name: "Soybean",    ta: "சோயாபீன்",             icon: "🫘", defaultExpected: 0.60, defaultMin: 0.48 },
+      { name: "Green Gram",   ta: "பாசிப்பருப்பு",        icon: "🟢", defaultExpected: 0.85, defaultMin: 0.70 },
+      { name: "Wheat",        ta: "கோதுமை",              icon: "🌾", defaultExpected: 0.35, defaultMin: 0.30 },
+      { name: "Finger Millet",ta: "ராகி",                icon: "🌾", defaultExpected: 0.30, defaultMin: 0.25 },
     ]
   },
   {
     key: "spices",
+    labelKey: "crop_category_spices",
     crops: [
-      { name: "Turmeric",    ta: "மஞ்சள்",              icon: "🟡", defaultExpected: 1.50, defaultMin: 1.20 },
-      { name: "Ginger",      ta: "இஞ்சி",               icon: "🫚", defaultExpected: 1.80, defaultMin: 1.50 },
-      { name: "Garlic",      ta: "பூண்டு",              icon: "🧄", defaultExpected: 2.00, defaultMin: 1.60 },
-      { name: "Coriander",   ta: "கொத்தமல்லி",          icon: "🌿", defaultExpected: 1.20, defaultMin: 0.95 },
-      { name: "Cumin",       ta: "சீரகம்",              icon: "🌿", defaultExpected: 2.50, defaultMin: 2.00 },
-      { name: "Black Pepper",ta: "மிளகு",               icon: "⚫", defaultExpected: 4.00, defaultMin: 3.20 },
-      { name: "Cardamom",    ta: "ஏலக்காய்",            icon: "🌿", defaultExpected: 8.00, defaultMin: 6.50 },
-      { name: "Clove",       ta: "கிராம்பு",            icon: "🌿", defaultExpected: 6.00, defaultMin: 5.00 },
+      { name: "Turmeric",     ta: "மஞ்சள்",              icon: "🟡", defaultExpected: 1.50, defaultMin: 1.20 },
+      { name: "Ginger",       ta: "இஞ்சி",               icon: "🫚", defaultExpected: 1.80, defaultMin: 1.50 },
+      { name: "Garlic",       ta: "பூண்டு",              icon: "🧄", defaultExpected: 2.00, defaultMin: 1.60 },
+      { name: "Coriander",    ta: "கொத்தமல்லி",          icon: "🌿", defaultExpected: 1.20, defaultMin: 0.95 },
+      { name: "Black Pepper", ta: "மிளகு",               icon: "⚫", defaultExpected: 4.00, defaultMin: 3.20 },
+      { name: "Cardamom",     ta: "ஏலக்காய்",            icon: "🌿", defaultExpected: 8.00, defaultMin: 6.50 },
     ]
   },
   {
-    key: "commercial",
+    key: "others",
+    labelKey: "crop_category_others",
     crops: [
-      { name: "Sugarcane",  ta: "கரும்பு",              icon: "🎋", defaultExpected: 0.08, defaultMin: 0.06 },
-      { name: "Cotton",     ta: "பருத்தி",              icon: "☁️", defaultExpected: 0.70, defaultMin: 0.55 },
-      { name: "Tobacco",    ta: "புகையிலை",             icon: "🌿", defaultExpected: 1.50, defaultMin: 1.20 },
-      { name: "Tea",        ta: "தேயிலை",               icon: "🍵", defaultExpected: 1.20, defaultMin: 0.95 },
-      { name: "Coffee",     ta: "காப்பி",               icon: "☕", defaultExpected: 2.00, defaultMin: 1.60 },
-      { name: "Rubber",     ta: "ரப்பர்",               icon: "🌲", defaultExpected: 1.30, defaultMin: 1.05 },
-      { name: "Arecanut",   ta: "பாக்கு",               icon: "🌴", defaultExpected: 3.00, defaultMin: 2.40 },
-      { name: "Cashew",     ta: "முந்திரி",             icon: "🥜", defaultExpected: 4.00, defaultMin: 3.20 },
+      { name: "Sugarcane",    ta: "கரும்பு",              icon: "🎋", defaultExpected: 0.08, defaultMin: 0.06 },
+      { name: "Cotton",       ta: "பருத்தி",              icon: "☁️", defaultExpected: 0.70, defaultMin: 0.55 },
+      { name: "Tea",          ta: "தேயிலை",               icon: "🍵", defaultExpected: 1.20, defaultMin: 0.95 },
+      { name: "Coffee",       ta: "காப்பி",               icon: "☕", defaultExpected: 2.00, defaultMin: 1.60 },
     ]
-  },
+  }
 ];
+
+const ALL_CROPS = ALL_CROP_CATEGORIES.flatMap(category => category.crops);
+const CROPS = ALL_CROPS;
+const QUICK_BUYER_CROPS = ALL_CROPS.slice(0, 6);
 
 // Validates that an approval URL points to the trusted PayPal Sandbox checkout domain
 function isValidPayPalSandboxUrl(urlStr) {
@@ -152,6 +112,8 @@ export default function App() {
 
   // Listing Form State
   const [selectedCrop, setSelectedCrop] = useState(CROPS[0]);
+  const [cropCategory, setCropCategory] = useState('all');
+  const [cropSearchQuery, setCropSearchQuery] = useState('');
   const [quantity, setQuantity] = useState("500");
   const [expectedPrice, setExpectedPrice] = useState("1.00");
   const [minimumPrice, setMinimumPrice] = useState("0.90");
@@ -590,6 +552,16 @@ export default function App() {
     }
   };
 
+  const filteredCrops = ALL_CROPS.filter((crop) => {
+    const matchesCategory = cropCategory === 'all' || 
+      ALL_CROP_CATEGORIES.find(c => c.key === cropCategory)?.crops.some(c => c.name.toLowerCase() === crop.name.toLowerCase());
+    const query = cropSearchQuery.trim().toLowerCase();
+    const matchesSearch = !query || 
+      crop.name.toLowerCase().includes(query) || 
+      crop.ta.toLowerCase().includes(query);
+    return matchesCategory && matchesSearch;
+  });
+
   return (
     <div className={`min-h-screen bg-slate-50 text-slate-900 pb-16 ${lang === 'ta' ? 'tamil-font' : ''}`}>
       {/* Top Notice: Mock Mode / Sandbox Banner */}
@@ -758,7 +730,7 @@ export default function App() {
               <div className="mb-4">
                 <label className="block text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wider">{t.crop}</label>
                 <div className="grid grid-cols-3 gap-2 mb-2">
-                  {CROPS.map((crop) => (
+                  {QUICK_BUYER_CROPS.map((crop) => (
                     <button
                       key={crop.name}
                       type="button"
@@ -1007,30 +979,105 @@ export default function App() {
               )}
             </div>
 
-            {/* Picture-based Crop Selection (6 Crops) */}
+            {/* Crop Selection with Category Tabs, Search Box & Large Tap Targets */}
             <div className="mb-5">
-              <label className="block text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wider">{t.crop}</label>
-              <div className="grid grid-cols-3 gap-2">
-                {CROPS.map((crop) => (
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider">{t.crop}</label>
+                {selectedCrop && (
+                  <span className="text-xs bg-agrigreen-100 text-agrigreen-900 font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1.5 border border-agrigreen-200">
+                    <span>{selectedCrop.icon}</span>
+                    <span>{lang === 'ta' ? selectedCrop.ta : selectedCrop.name}</span>
+                    <span className="text-[10px] text-agrigreen-700 bg-white/70 px-1 rounded font-normal">({t.crop_selected_msg})</span>
+                  </span>
+                )}
+              </div>
+
+              {/* Search Box */}
+              <div className="relative mb-2.5">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={cropSearchQuery}
+                  onChange={(e) => setCropSearchQuery(e.target.value)}
+                  placeholder={t.crop_search_placeholder}
+                  className="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-agrigreen-500/20 focus:border-agrigreen-500 transition"
+                />
+                {cropSearchQuery && (
                   <button
-                    key={crop.name}
                     type="button"
-                    onClick={() => {
-                      setSelectedCrop(crop);
-                      setExpectedPrice(crop.defaultExpected.toFixed(2));
-                      setMinimumPrice(crop.defaultMin.toFixed(2));
-                    }}
-                    className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center gap-1 ${
-                      selectedCrop.name === crop.name 
-                        ? 'border-agrigreen-600 bg-agrigreen-50 text-agrigreen-900 font-bold ring-2 ring-agrigreen-500/20' 
-                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                    onClick={() => setCropSearchQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Category Tabs */}
+              <div className="flex gap-1.5 overflow-x-auto pb-1 mb-2.5 scrollbar-thin">
+                <button
+                  type="button"
+                  onClick={() => setCropCategory('all')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+                    cropCategory === 'all'
+                      ? 'bg-agrigreen-700 text-white shadow-sm'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {t.crop_category_all}
+                </button>
+                {ALL_CROP_CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.key}
+                    type="button"
+                    onClick={() => setCropCategory(cat.key)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+                      cropCategory === cat.key
+                        ? 'bg-agrigreen-700 text-white shadow-sm'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                     }`}
                   >
-                    <span className="text-2xl">{crop.icon}</span>
-                    <span className="text-xs">{lang === 'ta' ? crop.ta : crop.name}</span>
+                    {t[cat.labelKey] || cat.key}
                   </button>
                 ))}
               </div>
+
+              {/* Crop Grid with Large Tap Targets & Selected Highlight */}
+              {filteredCrops.length === 0 ? (
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-center text-xs text-slate-500">
+                  {t.no_crops_found}
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-64 overflow-y-auto p-1.5 border border-slate-200 rounded-xl bg-slate-50/50">
+                  {filteredCrops.map((crop) => {
+                    const isSelected = selectedCrop?.name.toLowerCase() === crop.name.toLowerCase();
+                    return (
+                      <button
+                        key={crop.name}
+                        type="button"
+                        onClick={() => {
+                          setSelectedCrop(crop);
+                          setExpectedPrice(crop.defaultExpected.toFixed(2));
+                          setMinimumPrice(crop.defaultMin.toFixed(2));
+                        }}
+                        className={`min-h-[72px] p-2 rounded-xl border text-center transition flex flex-col items-center justify-center gap-0.5 cursor-pointer active:scale-95 ${
+                          isSelected
+                            ? 'border-2 border-agrigreen-600 bg-agrigreen-50 text-agrigreen-950 font-bold ring-2 ring-agrigreen-500/30 shadow-sm'
+                            : 'border-slate-200 bg-white text-slate-700 hover:border-agrigreen-300 hover:bg-slate-50'
+                        }`}
+                      >
+                        <span className="text-2xl leading-none">{crop.icon}</span>
+                        <span className="text-xs font-semibold leading-tight line-clamp-1">
+                          {lang === 'ta' ? crop.ta : crop.name}
+                        </span>
+                        <span className="text-[10px] text-slate-400 leading-none">
+                          {lang === 'ta' ? crop.name : crop.ta}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Form Fields */}

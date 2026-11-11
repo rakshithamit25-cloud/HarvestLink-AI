@@ -136,3 +136,59 @@ def test_tamil_parser_english_sentence():
     assert len(res["missing_fields"]) == 0
     assert res["status"] == "parsed"
 
+
+def test_tamil_parser_expanded_crops_tamil():
+    # Test 5 newly added Tamil Nadu crops in Tamil
+    # 1. Turmeric (மஞ்சள்)
+    res_turmeric = parse_tamil_or_english_text("ஈரோட்டில் 100 கிலோ மஞ்சள் உள்ளது $2")
+    assert res_turmeric["crop_name"] == "Turmeric"
+    assert res_turmeric["quantity"] == 100.0
+    assert res_turmeric["expected_price"] == 2.0
+    assert res_turmeric["location"] == "Erode"
+
+    # 2. Coconut (தேங்காய்)
+    res_coconut = parse_tamil_or_english_text("சேலத்தில் 250 கிலோ தேங்காய் $1")
+    assert res_coconut["crop_name"] == "Coconut"
+    assert res_coconut["quantity"] == 250.0
+
+    # 3. Maize (மக்காச்சோளம்)
+    res_maize = parse_tamil_or_english_text("தர்மபுரியில் 300 கிலோ மக்காச்சோளம் உள்ளது")
+    assert res_maize["crop_name"] == "Maize"
+    assert res_maize["quantity"] == 300.0
+    assert res_maize["location"] == "Dharmapuri"
+
+    # 4. Drumstick (முருங்கைக்காய்)
+    res_drumstick = parse_tamil_or_english_text("மதுரையில் 75 கிலோ முருங்கைக்காய்")
+    assert res_drumstick["crop_name"] == "Drumstick"
+    assert res_drumstick["quantity"] == 75.0
+    assert res_drumstick["location"] == "Madurai"
+
+    # 5. Sugarcane (கரும்பு)
+    res_sugarcane = parse_tamil_or_english_text("திருச்சியில் 1000 கிலோ கரும்பு")
+    assert res_sugarcane["crop_name"] == "Sugarcane"
+    assert res_sugarcane["quantity"] == 1000.0
+    assert res_sugarcane["location"] == "Trichy"
+
+
+def test_tamil_parser_expanded_crops_english():
+    # Test 5 newly added crops in English
+    res1 = parse_tamil_or_english_text("I have 80 kg of fresh turmeric in Erode")
+    assert res1["crop_name"] == "Turmeric"
+    assert res1["quantity"] == 80.0
+
+    res2 = parse_tamil_or_english_text("150 kg coconut in Salem")
+    assert res2["crop_name"] == "Coconut"
+    assert res2["quantity"] == 150.0
+
+    res3 = parse_tamil_or_english_text("500 kg maize in Dharmapuri")
+    assert res3["crop_name"] == "Maize"
+    assert res3["quantity"] == 500.0
+
+    res4 = parse_tamil_or_english_text("40 kg drumstick in Madurai")
+    assert res4["crop_name"] == "Drumstick"
+    assert res4["quantity"] == 40.0
+
+    res5 = parse_tamil_or_english_text("2000 kg sugarcane in Trichy")
+    assert res5["crop_name"] == "Sugarcane"
+    assert res5["quantity"] == 2000.0
+

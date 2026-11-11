@@ -2,6 +2,7 @@ import re
 from typing import Dict, Any, List, Optional
 
 TAMIL_CROP_MAP = {
+    # Vegetables
     "தக்காளி": "Tomato",
     "thakkali": "Tomato",
     "tomato": "Tomato",
@@ -28,8 +29,114 @@ TAMIL_CROP_MAP = {
     "மிளகாய்": "Chilli",
     "milagai": "Chilli",
     "chilli": "Chilli",
+    "chillies": "Chilli",
+    "chili": "Chilli",
     "முட்டைக்கோஸ்": "Cabbage",
-    "cabbage": "Cabbage"
+    "cabbage": "Cabbage",
+    "காலிஃபிளவர்": "Cauliflower",
+    "காலிபிளவர்": "Cauliflower",
+    "cauliflower": "Cauliflower",
+    "பீன்ஸ்": "Beans",
+    "beans": "Beans",
+    "bean": "Beans",
+    "முருங்கைக்காய்": "Drumstick",
+    "முருங்கை": "Drumstick",
+    "murungakkai": "Drumstick",
+    "drumstick": "Drumstick",
+    "பாகற்காய்": "Bitter Gourd",
+    "பாகற்கா": "Bitter Gourd",
+    "pavakkai": "Bitter Gourd",
+    "bitter gourd": "Bitter Gourd",
+    "bittergourd": "Bitter Gourd",
+    "பூசணிக்காய்": "Pumpkin",
+    "பூசணி": "Pumpkin",
+    "poosanikkai": "Pumpkin",
+    "pumpkin": "Pumpkin",
+    "வெள்ளரிக்காய்": "Cucumber",
+    "வெள்ளரி": "Cucumber",
+    "vellarikkai": "Cucumber",
+    "cucumber": "Cucumber",
+    "முள்ளங்கி": "Radish",
+    "radish": "Radish",
+    "பீட்ரூட்": "Beetroot",
+    "beetroot": "Beetroot",
+
+    # Fruits
+    "தேங்காய்": "Coconut",
+    "thengai": "Coconut",
+    "coconut": "Coconut",
+    "coconuts": "Coconut",
+    "வாழைப்பழம்": "Banana",
+    "வாழை": "Banana",
+    "vazhaipazham": "Banana",
+    "banana": "Banana",
+    "bananas": "Banana",
+    "மாம்பழம்": "Mango",
+    "மாங்காய்": "Mango",
+    "mango": "Mango",
+    "mangoes": "Mango",
+    "பப்பாளி": "Papaya",
+    "pappali": "Papaya",
+    "papaya": "Papaya",
+    "கொய்யா": "Guava",
+    "கொய்யாப்பழம்": "Guava",
+    "koyya": "Guava",
+    "guava": "Guava",
+    "மாதுளை": "Pomegranate",
+    "மாதுளம்பழம்": "Pomegranate",
+    "madhulai": "Pomegranate",
+    "pomegranate": "Pomegranate",
+    "தர்பூசணி": "Watermelon",
+    "watermelon": "Watermelon",
+
+    # Pulses and Grains
+    "அரிசி": "Rice",
+    "நெல்": "Rice",
+    "arisi": "Rice",
+    "paddy": "Rice",
+    "rice": "Rice",
+    "மக்காச்சோளம்": "Maize",
+    "மக்கா சோளம்": "Maize",
+    "சோளம்": "Maize",
+    "maize": "Maize",
+    "corn": "Maize",
+    "வேர்க்கடலை": "Groundnut",
+    "நிலக்கடலை": "Groundnut",
+    "கடலை": "Groundnut",
+    "groundnut": "Groundnut",
+    "peanut": "Groundnut",
+    "peanuts": "Groundnut",
+    "உளுந்து": "Black Gram",
+    "ulundhu": "Black Gram",
+    "black gram": "Black Gram",
+    "blackgram": "Black Gram",
+    "urad dal": "Black Gram",
+    "பாசிப்பருப்பு": "Green Gram",
+    "பாசிப்பயறு": "Green Gram",
+    "பயறு": "Green Gram",
+    "green gram": "Green Gram",
+    "greengram": "Green Gram",
+    "moong dal": "Green Gram",
+
+    # Spices
+    "மஞ்சள்": "Turmeric",
+    "manjal": "Turmeric",
+    "turmeric": "Turmeric",
+    "இஞ்சி": "Ginger",
+    "inji": "Ginger",
+    "ginger": "Ginger",
+    "பூண்டு": "Garlic",
+    "poondu": "Garlic",
+    "garlic": "Garlic",
+    "கொத்தமல்லி": "Coriander",
+    "மல்லி": "Coriander",
+    "kothamalli": "Coriander",
+    "coriander": "Coriander",
+
+    # Others / Commercial
+    "கரும்பு": "Sugarcane",
+    "karumbu": "Sugarcane",
+    "sugarcane": "Sugarcane"
 }
 
 TAMIL_DIGITS = {
@@ -220,11 +327,11 @@ def parse_tamil_or_english_text(raw_text: str) -> Dict[str, Any]:
 
     lower_text = text.lower()
 
-    # 1. Extract Crop
+    # 1. Extract Crop (match longer, more specific keywords first)
     detected_crop = None
-    for keyword, standard_name in TAMIL_CROP_MAP.items():
+    for keyword in sorted(TAMIL_CROP_MAP.keys(), key=len, reverse=True):
         if keyword in lower_text or keyword in text:
-            detected_crop = standard_name
+            detected_crop = TAMIL_CROP_MAP[keyword]
             break
 
     # 2. Extract Price if present (e.g. "$1", "1 டாலர்", "80 ரூபாய்", "1 dollar")
