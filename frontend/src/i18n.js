@@ -103,7 +103,15 @@ export const translations = {
     demo_otp_code: "Demo Code",
     logged_in_as: "Logged in as",
     login_success: "Logged in successfully!",
-    logout_success: "Logged out"
+    logout_success: "Logged out",
+    welcome_back: "Welcome to HarvestLink AI",
+    login_subtitle: "Agentic Agricultural Commerce & Food Waste Reduction",
+    demo_accounts_title: "Demo Registered Accounts (Tap to select):",
+    verifying_session: "Verifying secure session...",
+    invalid_phone_err: "Please enter a valid registered mobile number",
+    invalid_otp_err: "Please enter a valid 6-digit OTP",
+    change_number: "Change number",
+    secure_login_badge: "Encrypted JWT Session • Zero Password Friction"
   },
   ta: {
     app_title: "ஹார்வெஸ்ட்லிங்க் AI",
@@ -209,6 +217,14 @@ export const translations = {
     demo_otp_code: "டெமோ குறியீடு",
     logged_in_as: "உள்நுழைந்துள்ளவர்",
     login_success: "வெற்றிகரமாக உள்நுழைந்துள்ளீர்கள்!",
-    logout_success: "வெளியேறிவிட்டீர்கள்"
+    logout_success: "வெளியேறிவிட்டீர்கள்",
+    welcome_back: "ஹார்வெஸ்ட்லிங்க் AI-க்கு வரவேற்கிறோம்",
+    login_subtitle: "விவசாய உணவு வீணாவதைத் தடுக்கும் செயற்கை நுண்ணறிவு வணிகத் தளம்",
+    demo_accounts_title: "டெமோ பதிவுசெய்த கணக்குகள் (தேர்வு செய்ய தொடவும்):",
+    verifying_session: "பாதுகாப்பான உள்நுழைவு சரிபார்க்கப்படுகிறது...",
+    invalid_phone_err: "சரியான பதிவுசெய்த மொபைல் எண்ணை உள்ளிடவும்",
+    invalid_otp_err: "சரியான 6 இலக்க OTP-ஐ உள்ளிடவும்",
+    change_number: "எண்ணை மாற்றவும்",
+    secure_login_badge: "பாதுகாப்பான JWT உள்நுழைவு • கடவுச்சொல் இல்லா எளிமை"
   }
 };

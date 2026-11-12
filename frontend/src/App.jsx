@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { translations } from './i18n';
 import { api } from './api';
-import { 
-  Mic, MicOff, Volume2, ShieldCheck, CheckCircle2, Clock, AlertTriangle, 
-  RefreshCw, Play, ArrowRight, DollarSign, Package, ShoppingCart, UserCheck, 
+import {
+  Mic, MicOff, Volume2, ShieldCheck, CheckCircle2, Clock, AlertTriangle,
+  RefreshCw, Play, ArrowRight, DollarSign, Package, ShoppingCart, UserCheck,
   MapPin, Sparkles, Building2, Store, Factory, HelpCircle, Layers, Search, X
 } from 'lucide-react';
 
@@ -13,73 +13,73 @@ const ALL_CROP_CATEGORIES = [
     key: "vegetables",
     labelKey: "crop_category_vegetables",
     crops: [
-      { name: "Tomato",       ta: "தக்காளி",            icon: "🍅", defaultExpected: 1.00, defaultMin: 0.90 },
-      { name: "Onion",        ta: "வெங்காயம்",           icon: "🧅", defaultExpected: 0.80, defaultMin: 0.70 },
-      { name: "Brinjal",      ta: "கத்தரிக்காய்",        icon: "🍆", defaultExpected: 0.60, defaultMin: 0.50 },
-      { name: "Potato",       ta: "உருளைக்கிழங்கு",      icon: "🥔", defaultExpected: 0.70, defaultMin: 0.60 },
-      { name: "Chilli",       ta: "மிளகாய்",             icon: "🌶️", defaultExpected: 1.50, defaultMin: 1.20 },
-      { name: "Okra",         ta: "வெண்டைக்காய்",        icon: "🌿", defaultExpected: 0.90, defaultMin: 0.75 },
-      { name: "Carrot",       ta: "கேரட்",               icon: "🥕", defaultExpected: 1.20, defaultMin: 1.00 },
-      { name: "Cabbage",      ta: "முட்டைக்கோஸ்",        icon: "🥬", defaultExpected: 0.50, defaultMin: 0.40 },
-      { name: "Cauliflower",  ta: "காலிஃபிளவர்",         icon: "🥦", defaultExpected: 0.70, defaultMin: 0.60 },
-      { name: "Beans",        ta: "பீன்ஸ்",              icon: "🫘", defaultExpected: 1.10, defaultMin: 0.90 },
-      { name: "Drumstick",    ta: "முருங்கைக்காய்",      icon: "🌱", defaultExpected: 1.00, defaultMin: 0.80 },
-      { name: "Bitter Gourd", ta: "பாகற்காய்",           icon: "🥝", defaultExpected: 0.80, defaultMin: 0.65 },
-      { name: "Pumpkin",      ta: "பூசணிக்காய்",         icon: "🎃", defaultExpected: 0.40, defaultMin: 0.30 },
-      { name: "Cucumber",     ta: "வெள்ளரிக்காய்",       icon: "🥒", defaultExpected: 0.60, defaultMin: 0.50 },
-      { name: "Radish",       ta: "முள்ளங்கி",           icon: "🫚", defaultExpected: 0.50, defaultMin: 0.40 },
-      { name: "Beetroot",     ta: "பீட்ரூட்",            icon: "🫀", defaultExpected: 0.70, defaultMin: 0.55 },
+      { name: "Tomato", ta: "தக்காளி", icon: "🍅", defaultExpected: 1.00, defaultMin: 0.90 },
+      { name: "Onion", ta: "வெங்காயம்", icon: "🧅", defaultExpected: 0.80, defaultMin: 0.70 },
+      { name: "Brinjal", ta: "கத்தரிக்காய்", icon: "🍆", defaultExpected: 0.60, defaultMin: 0.50 },
+      { name: "Potato", ta: "உருளைக்கிழங்கு", icon: "🥔", defaultExpected: 0.70, defaultMin: 0.60 },
+      { name: "Chilli", ta: "மிளகாய்", icon: "🌶️", defaultExpected: 1.50, defaultMin: 1.20 },
+      { name: "Okra", ta: "வெண்டைக்காய்", icon: "🌿", defaultExpected: 0.90, defaultMin: 0.75 },
+      { name: "Carrot", ta: "கேரட்", icon: "🥕", defaultExpected: 1.20, defaultMin: 1.00 },
+      { name: "Cabbage", ta: "முட்டைக்கோஸ்", icon: "🥬", defaultExpected: 0.50, defaultMin: 0.40 },
+      { name: "Cauliflower", ta: "காலிஃபிளவர்", icon: "🥦", defaultExpected: 0.70, defaultMin: 0.60 },
+      { name: "Beans", ta: "பீன்ஸ்", icon: "🫘", defaultExpected: 1.10, defaultMin: 0.90 },
+      { name: "Drumstick", ta: "முருங்கைக்காய்", icon: "🌱", defaultExpected: 1.00, defaultMin: 0.80 },
+      { name: "Bitter Gourd", ta: "பாகற்காய்", icon: "🥝", defaultExpected: 0.80, defaultMin: 0.65 },
+      { name: "Pumpkin", ta: "பூசணிக்காய்", icon: "🎃", defaultExpected: 0.40, defaultMin: 0.30 },
+      { name: "Cucumber", ta: "வெள்ளரிக்காய்", icon: "🥒", defaultExpected: 0.60, defaultMin: 0.50 },
+      { name: "Radish", ta: "முள்ளங்கி", icon: "🫚", defaultExpected: 0.50, defaultMin: 0.40 },
+      { name: "Beetroot", ta: "பீட்ரூட்", icon: "🫀", defaultExpected: 0.70, defaultMin: 0.55 },
     ]
   },
   {
     key: "fruits",
     labelKey: "crop_category_fruits",
     crops: [
-      { name: "Coconut",      ta: "தேங்காய்",             icon: "🥥", defaultExpected: 0.20, defaultMin: 0.15 },
-      { name: "Banana",       ta: "வாழைப்பழம்",          icon: "🍌", defaultExpected: 0.50, defaultMin: 0.40 },
-      { name: "Mango",        ta: "மாம்பழம்",             icon: "🥭", defaultExpected: 1.50, defaultMin: 1.20 },
-      { name: "Papaya",       ta: "பப்பாளி",              icon: "🍈", defaultExpected: 0.60, defaultMin: 0.50 },
-      { name: "Guava",        ta: "கொய்யா",               icon: "🍏", defaultExpected: 0.80, defaultMin: 0.65 },
-      { name: "Pomegranate",  ta: "மாதுளை",               icon: "🍎", defaultExpected: 1.80, defaultMin: 1.50 },
-      { name: "Watermelon",   ta: "தர்பூசணி",             icon: "🍉", defaultExpected: 0.30, defaultMin: 0.25 },
-      { name: "Pineapple",    ta: "அன்னாசி",              icon: "🍍", defaultExpected: 0.70, defaultMin: 0.55 },
-      { name: "Grapes",       ta: "திராட்சை",             icon: "🍇", defaultExpected: 1.20, defaultMin: 1.00 },
-      { name: "Lemon",        ta: "எலுமிச்சை",            icon: "🍋", defaultExpected: 1.20, defaultMin: 1.00 },
+      { name: "Coconut", ta: "தேங்காய்", icon: "🥥", defaultExpected: 0.20, defaultMin: 0.15 },
+      { name: "Banana", ta: "வாழைப்பழம்", icon: "🍌", defaultExpected: 0.50, defaultMin: 0.40 },
+      { name: "Mango", ta: "மாம்பழம்", icon: "🥭", defaultExpected: 1.50, defaultMin: 1.20 },
+      { name: "Papaya", ta: "பப்பாளி", icon: "🍈", defaultExpected: 0.60, defaultMin: 0.50 },
+      { name: "Guava", ta: "கொய்யா", icon: "🍏", defaultExpected: 0.80, defaultMin: 0.65 },
+      { name: "Pomegranate", ta: "மாதுளை", icon: "🍎", defaultExpected: 1.80, defaultMin: 1.50 },
+      { name: "Watermelon", ta: "தர்பூசணி", icon: "🍉", defaultExpected: 0.30, defaultMin: 0.25 },
+      { name: "Pineapple", ta: "அன்னாசி", icon: "🍍", defaultExpected: 0.70, defaultMin: 0.55 },
+      { name: "Grapes", ta: "திராட்சை", icon: "🍇", defaultExpected: 1.20, defaultMin: 1.00 },
+      { name: "Lemon", ta: "எலுமிச்சை", icon: "🍋", defaultExpected: 1.20, defaultMin: 1.00 },
     ]
   },
   {
     key: "pulses_grains",
     labelKey: "crop_category_pulses_grains",
     crops: [
-      { name: "Rice",         ta: "அரிசி",               icon: "🌾", defaultExpected: 0.40, defaultMin: 0.35 },
-      { name: "Maize",        ta: "மக்காச்சோளம்",        icon: "🌽", defaultExpected: 0.25, defaultMin: 0.20 },
-      { name: "Groundnut",    ta: "கடலை (வேர்க்கடலை)",   icon: "🥜", defaultExpected: 0.80, defaultMin: 0.65 },
-      { name: "Black Gram",   ta: "உளுந்து",             icon: "⚫", defaultExpected: 0.90, defaultMin: 0.75 },
-      { name: "Green Gram",   ta: "பாசிப்பருப்பு",        icon: "🟢", defaultExpected: 0.85, defaultMin: 0.70 },
-      { name: "Wheat",        ta: "கோதுமை",              icon: "🌾", defaultExpected: 0.35, defaultMin: 0.30 },
-      { name: "Finger Millet",ta: "ராகி",                icon: "🌾", defaultExpected: 0.30, defaultMin: 0.25 },
+      { name: "Rice", ta: "அரிசி", icon: "🌾", defaultExpected: 0.40, defaultMin: 0.35 },
+      { name: "Maize", ta: "மக்காச்சோளம்", icon: "🌽", defaultExpected: 0.25, defaultMin: 0.20 },
+      { name: "Groundnut", ta: "கடலை (வேர்க்கடலை)", icon: "🥜", defaultExpected: 0.80, defaultMin: 0.65 },
+      { name: "Black Gram", ta: "உளுந்து", icon: "⚫", defaultExpected: 0.90, defaultMin: 0.75 },
+      { name: "Green Gram", ta: "பாசிப்பருப்பு", icon: "🟢", defaultExpected: 0.85, defaultMin: 0.70 },
+      { name: "Wheat", ta: "கோதுமை", icon: "🌾", defaultExpected: 0.35, defaultMin: 0.30 },
+      { name: "Finger Millet", ta: "ராகி", icon: "🌾", defaultExpected: 0.30, defaultMin: 0.25 },
     ]
   },
   {
     key: "spices",
     labelKey: "crop_category_spices",
     crops: [
-      { name: "Turmeric",     ta: "மஞ்சள்",              icon: "🟡", defaultExpected: 1.50, defaultMin: 1.20 },
-      { name: "Ginger",       ta: "இஞ்சி",               icon: "🫚", defaultExpected: 1.80, defaultMin: 1.50 },
-      { name: "Garlic",       ta: "பூண்டு",              icon: "🧄", defaultExpected: 2.00, defaultMin: 1.60 },
-      { name: "Coriander",    ta: "கொத்தமல்லி",          icon: "🌿", defaultExpected: 1.20, defaultMin: 0.95 },
-      { name: "Black Pepper", ta: "மிளகு",               icon: "⚫", defaultExpected: 4.00, defaultMin: 3.20 },
-      { name: "Cardamom",     ta: "ஏலக்காய்",            icon: "🌿", defaultExpected: 8.00, defaultMin: 6.50 },
+      { name: "Turmeric", ta: "மஞ்சள்", icon: "🟡", defaultExpected: 1.50, defaultMin: 1.20 },
+      { name: "Ginger", ta: "இஞ்சி", icon: "🫚", defaultExpected: 1.80, defaultMin: 1.50 },
+      { name: "Garlic", ta: "பூண்டு", icon: "🧄", defaultExpected: 2.00, defaultMin: 1.60 },
+      { name: "Coriander", ta: "கொத்தமல்லி", icon: "🌿", defaultExpected: 1.20, defaultMin: 0.95 },
+      { name: "Black Pepper", ta: "மிளகு", icon: "⚫", defaultExpected: 4.00, defaultMin: 3.20 },
+      { name: "Cardamom", ta: "ஏலக்காய்", icon: "🌿", defaultExpected: 8.00, defaultMin: 6.50 },
     ]
   },
   {
     key: "others",
     labelKey: "crop_category_others",
     crops: [
-      { name: "Sugarcane",    ta: "கரும்பு",              icon: "🎋", defaultExpected: 0.08, defaultMin: 0.06 },
-      { name: "Cotton",       ta: "பருத்தி",              icon: "☁️", defaultExpected: 0.70, defaultMin: 0.55 },
-      { name: "Tea",          ta: "தேயிலை",               icon: "🍵", defaultExpected: 1.20, defaultMin: 0.95 },
-      { name: "Coffee",       ta: "காப்பி",               icon: "☕", defaultExpected: 2.00, defaultMin: 1.60 },
+      { name: "Sugarcane", ta: "கரும்பு", icon: "🎋", defaultExpected: 0.08, defaultMin: 0.06 },
+      { name: "Cotton", ta: "பருத்தி", icon: "☁️", defaultExpected: 0.70, defaultMin: 0.55 },
+      { name: "Tea", ta: "தேயிலை", icon: "🍵", defaultExpected: 1.20, defaultMin: 0.95 },
+      { name: "Coffee", ta: "காப்பி", icon: "☕", defaultExpected: 2.00, defaultMin: 1.60 },
     ]
   }
 ];
@@ -103,16 +103,24 @@ function isValidPayPalSandboxUrl(urlStr) {
 export default function App() {
   const [lang, setLang] = useState('ta');
   const t = translations[lang] || translations.en;
-  
+
   const [role, setRole] = useState('farmer'); // 'farmer', 'buyer', 'operator'
   const [loading, setLoading] = useState(false);
   const [demoBanner, setDemoBanner] = useState(null);
   const [paymentBanner, setPaymentBanner] = useState(null);
   const captureAttemptedRef = useRef(false);
 
+  const [paypalMode, setPaypalMode] = useState('unknown');
+
+  useEffect(() => {
+    api.fetchPayPalConfig()
+      .then((data) => setPaypalMode(data.paypal_mode || 'unknown'))
+      .catch(() => setPaypalMode('unknown'));
+  }, []);
+
   // Auth & Mobile OTP State
   const [currentUser, setCurrentUser] = useState(() => api.getStoredUser());
-  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [isVerifyingSession, setIsVerifyingSession] = useState(true);
   const [loginPhone, setLoginPhone] = useState("+91-9876543210");
   const [loginOtp, setLoginOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
@@ -121,6 +129,33 @@ export default function App() {
   const [authError, setAuthError] = useState(null);
   const [authSuccess, setAuthSuccess] = useState(null);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
+
+  // Validate session on mount / refresh
+  useEffect(() => {
+    let isMounted = true;
+    const verifyAuth = async () => {
+      try {
+        const user = await api.validateSession();
+        if (isMounted) {
+          if (user) {
+            setCurrentUser(user);
+            if (user.role) {
+              setRole(user.role);
+            }
+            refreshData();
+          } else {
+            setCurrentUser(null);
+          }
+        }
+      } catch (err) {
+        if (isMounted) setCurrentUser(null);
+      } finally {
+        if (isMounted) setIsVerifyingSession(false);
+      }
+    };
+    verifyAuth();
+    return () => { isMounted = false; };
+  }, []);
 
   // Listing Form State
   const [selectedCrop, setSelectedCrop] = useState(CROPS[0]);
@@ -132,7 +167,7 @@ export default function App() {
   const [location, setLocation] = useState("Salem");
   const [harvestDate, setHarvestDate] = useState("2026-11-08");
   const [freshness, setFreshness] = useState("fresh");
-  
+
   // Voice Input State
   const [isListening, setIsListening] = useState(false);
   const [speechTranscript, setSpeechTranscript] = useState("");
@@ -172,7 +207,7 @@ export default function App() {
       recognition.continuous = false;
       recognition.interimResults = false;
       recognition.lang = lang === 'ta' ? 'ta-IN' : 'en-US';
-      
+
       recognition.onresult = async (event) => {
         const text = event.results[0][0].transcript;
         setSpeechTranscript(text);
@@ -209,10 +244,8 @@ export default function App() {
     } else {
       setSpeechSupported(false);
     }
-    
-    refreshData();
-  }, [lang]);
 
+  }, [lang]);
   // Handle return from PayPal Sandbox after buyer approval or cancellation
   useEffect(() => {
     try {
@@ -354,7 +387,7 @@ export default function App() {
     }
     const voices = window.speechSynthesis.getVoices();
     const tamilVoice = voices.find(v => v.lang.includes('ta') || v.name.toLowerCase().includes('tamil'));
-    
+
     const utterance = new SpeechSynthesisUtterance(text);
     if (tamilVoice) {
       utterance.voice = tamilVoice;
@@ -599,7 +632,7 @@ export default function App() {
 
   const handleVerifyOTP = async () => {
     if (!loginOtp || loginOtp.trim().length !== 6) {
-      setAuthError("Please enter a valid 6-digit OTP");
+      setAuthError(t.invalid_otp_err || "Please enter a valid 6-digit OTP");
       return;
     }
     setAuthLoading(true);
@@ -610,7 +643,6 @@ export default function App() {
       if (data.user?.role) {
         setRole(data.user.role);
       }
-      setShowLoginModal(false);
       setLoginOtp("");
       setDemoOtpDisplay(null);
       setAuthSuccess(t.login_success);
@@ -626,27 +658,297 @@ export default function App() {
   const handleLogout = () => {
     api.logout();
     setCurrentUser(null);
+    setOtpSent(false);
+    setLoginOtp("");
+    setDemoOtpDisplay(null);
+    setAuthError(null);
     setAuthSuccess(t.logout_success);
     setTimeout(() => setAuthSuccess(null), 3000);
   };
 
   const filteredCrops = ALL_CROPS.filter((crop) => {
-    const matchesCategory = cropCategory === 'all' || 
+    const matchesCategory = cropCategory === 'all' ||
       ALL_CROP_CATEGORIES.find(c => c.key === cropCategory)?.crops.some(c => c.name.toLowerCase() === crop.name.toLowerCase());
     const query = cropSearchQuery.trim().toLowerCase();
-    const matchesSearch = !query || 
-      crop.name.toLowerCase().includes(query) || 
+    const matchesSearch = !query ||
+      crop.name.toLowerCase().includes(query) ||
       crop.ta.toLowerCase().includes(query);
     return matchesCategory && matchesSearch;
   });
 
+  // 1. Session Verifying Screen (brief splash while checking token)
+  if (isVerifyingSession) {
+    return (
+      <div className={`min-h-screen bg-gradient-to-br from-emerald-50 via-slate-50 to-green-50 flex flex-col items-center justify-center p-6 ${lang === 'ta' ? 'tamil-font' : ''}`}>
+        <div className="w-16 h-16 rounded-2xl bg-agrigreen-600 flex items-center justify-center text-3xl shadow-lg shadow-agrigreen-600/30 mb-4 animate-pulse">
+          🌱
+        </div>
+        <h2 className="text-xl font-bold text-slate-800">{t.app_title}</h2>
+        <p className="text-xs text-slate-500 mt-2 flex items-center gap-2">
+          <RefreshCw className="w-4 h-4 animate-spin text-agrigreen-600" />
+          <span>{t.verifying_session}</span>
+        </p>
+      </div>
+    );
+  }
+
+  // 2. Full-Page Login Screen (when not authenticated)
+  if (!currentUser) {
+    return (
+      <div className={`min-h-screen bg-gradient-to-br from-emerald-50 via-slate-50 to-green-50 flex flex-col justify-between ${lang === 'ta' ? 'tamil-font' : ''}`}>
+        {/* Top Navbar */}
+        <header className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">🌱</span>
+            <div>
+              <h1 className="text-xl font-black text-agrigreen-900 tracking-tight">{t.app_title}</h1>
+              <p className="text-[11px] text-slate-500 hidden sm:block">{t.tagline}</p>
+            </div>
+          </div>
+          {/* Language Selector */}
+          <div className="flex bg-white/80 backdrop-blur-xs p-1 rounded-xl border border-slate-200/80 shadow-xs">
+            <button
+              onClick={() => setLang('ta')}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition cursor-pointer ${lang === 'ta' ? 'bg-agrigreen-700 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+            >
+              தமிழ்
+            </button>
+            <button
+              onClick={() => setLang('en')}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition cursor-pointer ${lang === 'en' ? 'bg-agrigreen-700 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+            >
+              English
+            </button>
+          </div>
+        </header>
+
+        {/* Main Content Area */}
+        <main className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 my-auto">
+          <div className="grid lg:grid-cols-12 gap-8 items-center">
+            {/* Left Column: Platform Branding & Mission */}
+            <div className="lg:col-span-5 space-y-6 text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-agrigreen-100 text-agrigreen-800 text-xs font-bold border border-agrigreen-200 shadow-xs">
+                <span>🌾</span>
+                <span>Tamil Nadu Smallholder AgTech</span>
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 leading-tight">
+                {t.welcome_back}
+              </h2>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                {t.mission}
+              </p>
+
+              {/* Key Highlights */}
+              <div className="space-y-3 pt-2 text-left">
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-white/70 border border-slate-200/60 shadow-xs">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-sm shrink-0">
+                    🗣️
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-800">Tamil Voice Produce Listing</h4>
+                    <p className="text-[11px] text-slate-500">Natural voice input with quantity & crop recognition</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-white/70 border border-slate-200/60 shadow-xs">
+                  <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-800 flex items-center justify-center font-bold text-sm shrink-0">
+                    💳
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-800">PayPal Sandbox Escrow</h4>
+                    <p className="text-[11px] text-slate-500">Verified buyer checkout & automated delivery release</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: Full-Page Login Card */}
+            <div className="lg:col-span-7">
+              <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-200/80">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-10 h-10 rounded-xl bg-agrigreen-50 text-agrigreen-700 flex items-center justify-center text-xl border border-agrigreen-200">
+                      📱
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-900">{t.otp_login_title}</h3>
+                      <p className="text-xs text-slate-500">{t.otp_login_desc}</p>
+                    </div>
+                  </div>
+                  <ShieldCheck className="w-5 h-5 text-agrigreen-600 hidden sm:block" />
+                </div>
+
+                {/* Notifications */}
+                {authError && (
+                  <div className="my-4 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-medium flex items-start gap-2 animate-in fade-in">
+                    <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-red-500" />
+                    <span>{authError}</span>
+                  </div>
+                )}
+                {authSuccess && (
+                  <div className="my-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 font-medium flex items-center gap-2 animate-in fade-in">
+                    <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+                    <span>{authSuccess}</span>
+                  </div>
+                )}
+
+                {/* Mobile Number Input */}
+                <div className="mt-4 mb-4">
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wider">
+                    {t.phone_number_label}
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="tel"
+                      value={loginPhone}
+                      onChange={(e) => setLoginPhone(e.target.value)}
+                      placeholder={t.phone_placeholder}
+                      className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-agrigreen-500/20 focus:border-agrigreen-500 transition"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSendOTP}
+                      disabled={authLoading || cooldownSeconds > 0}
+                      className="px-5 py-3 bg-agrigreen-700 hover:bg-agrigreen-800 disabled:bg-slate-300 text-white text-xs font-bold rounded-xl transition cursor-pointer whitespace-nowrap active:scale-95 shadow-sm"
+                    >
+                      {authLoading ? t.sending_otp : cooldownSeconds > 0 ? `${cooldownSeconds}s` : (otpSent ? t.resend_otp : t.send_otp)}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Quick Demo Accounts Chips */}
+                <div className="mb-5 p-3 rounded-2xl bg-slate-50 border border-slate-200/80">
+                  <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2">
+                    {t.demo_accounts_title}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => { setLoginPhone("+91-9876543210"); setAuthError(null); }}
+                      className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer flex items-center gap-1.5 ${loginPhone === '+91-9876543210' ? 'bg-agrigreen-100 text-agrigreen-900 border-agrigreen-300 shadow-xs' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'}`}
+                    >
+                      <span>👨‍🌾</span>
+                      <span>Kumar (Farmer)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setLoginPhone("+91-9876543211"); setAuthError(null); }}
+                      className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer flex items-center gap-1.5 ${loginPhone === '+91-9876543211' ? 'bg-blue-100 text-blue-900 border-blue-300 shadow-xs' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'}`}
+                    >
+                      <span>🏢</span>
+                      <span>Restaurant A (Buyer)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setLoginPhone("+91-9876543214"); setAuthError(null); }}
+                      className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition cursor-pointer flex items-center gap-1.5 ${loginPhone === '+91-9876543214' ? 'bg-amber-100 text-amber-900 border-amber-300 shadow-xs' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'}`}
+                    >
+                      <span>🤝</span>
+                      <span>Selvi (Operator)</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Demo OTP Box (Displayed only when backend returns demo_otp) */}
+                {demoOtpDisplay && (
+                  <div className="mb-5 p-4 bg-amber-50 border-2 border-amber-300 rounded-2xl animate-in fade-in">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+                        <Sparkles className="w-4 h-4 text-amber-600" />
+                        <span>{t.demo_otp_notice}</span>
+                      </span>
+                      <span className="text-[10px] font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full uppercase">Demo</span>
+                    </div>
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-amber-200/80">
+                      <div>
+                        <span className="text-[11px] text-amber-800 block">{t.demo_otp_code}:</span>
+                        <span className="text-2xl font-mono font-black tracking-widest text-amber-950">{demoOtpDisplay}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setLoginOtp(demoOtpDisplay)}
+                        className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl transition shadow-xs active:scale-95 cursor-pointer"
+                      >
+                        Auto-fill OTP
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Six-Digit OTP Input */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      {t.otp_label}
+                    </label>
+                    {otpSent && (
+                      <span className="text-[11px] text-agrigreen-700 font-semibold">
+                        ✓ OTP requested
+                      </span>
+                    )}
+                  </div>
+                  <input
+                    type="text"
+                    maxLength={6}
+                    value={loginOtp}
+                    onChange={(e) => setLoginOtp(e.target.value.replace(/\D/g, ''))}
+                    placeholder="• • • • • •"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-center text-2xl font-mono font-black tracking-[0.4em] text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-agrigreen-500/20 focus:border-agrigreen-500 transition"
+                  />
+                </div>
+
+                {/* Verify Button */}
+                <button
+                  type="button"
+                  onClick={handleVerifyOTP}
+                  disabled={authLoading || !loginOtp || loginOtp.length !== 6}
+                  className="w-full py-4 bg-agrigreen-700 hover:bg-agrigreen-800 disabled:bg-slate-300 text-white text-sm font-bold rounded-2xl shadow-lg shadow-agrigreen-700/20 transition active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  {authLoading ? (
+                    <RefreshCw className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="w-5 h-5" />
+                  )}
+                  <span>{authLoading ? t.verifying_otp : t.verify_otp}</span>
+                </button>
+
+                <p className="text-[11px] text-center text-slate-400 mt-4 flex items-center justify-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
+                  <span>{t.secure_login_badge}</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </main>
+
+        {/* Footer */}
+        <footer className="w-full max-w-7xl mx-auto px-4 py-4 text-center text-[11px] text-slate-400 border-t border-slate-200/60">
+          HarvestLink AI • PayPal AI Hackathon 2026 • Verified Smallholder Produce & Escrow Settlement
+        </footer>
+      </div>
+    );
+  }
+
+  // 3. Authenticated Dashboard
   return (
     <div className={`min-h-screen bg-slate-50 text-slate-900 pb-16 ${lang === 'ta' ? 'tamil-font' : ''}`}>
-      {/* Top Notice: Mock Mode / Sandbox Banner */}
-      <div className="bg-amber-500 text-slate-950 font-medium px-4 py-2 text-center text-xs md:text-sm flex items-center justify-center gap-2">
+
+      {/* PayPal Environment Status Banner */}
+      <div className={`font-medium px-4 py-2 text-center text-xs md:text-sm flex items-center justify-center gap-2 ${paypalMode === 'sandbox'
+        ? 'bg-blue-100 text-blue-900'
+        : paypalMode === 'mock'
+          ? 'bg-amber-500 text-slate-950'
+          : 'bg-slate-200 text-slate-800'
+        }`}>
         <AlertTriangle className="w-4 h-4" />
-        <span>{t.mock_mode_notice}</span>
+        <span>
+          {paypalMode === 'sandbox'
+            ? 'PAYPAL SANDBOX MODE — Test payments only (USD). No real money.'
+            : paypalMode === 'mock'
+              ? 'MOCK MODE — Simulated payments only. No real PayPal transaction.'
+              : 'PAYPAL STATUS UNKNOWN — Backend connection could not be verified.'}
+        </span>
       </div>
+
 
       {/* Main Header */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
@@ -662,13 +964,13 @@ export default function App() {
           <div className="flex items-center gap-3">
             {/* Language Selector */}
             <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
-              <button 
+              <button
                 onClick={() => setLang('ta')}
                 className={`px-3 py-1 text-xs font-semibold rounded-md transition ${lang === 'ta' ? 'bg-agrigreen-700 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
               >
                 தமிழ்
               </button>
-              <button 
+              <button
                 onClick={() => setLang('en')}
                 className={`px-3 py-1 text-xs font-semibold rounded-md transition ${lang === 'en' ? 'bg-agrigreen-700 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
               >
@@ -694,31 +996,19 @@ export default function App() {
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             </button>
 
-            {/* User Profile / Mobile OTP Login */}
-            {currentUser ? (
-              <div className="flex items-center gap-2 pl-3 border-l border-slate-200">
-                <div className="text-right hidden sm:block">
-                  <p className="text-xs font-bold text-slate-800 leading-none">{currentUser.name}</p>
-                  <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">{currentUser.role}</p>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="text-xs bg-slate-100 hover:bg-red-50 hover:text-red-700 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200 font-semibold transition cursor-pointer"
-                >
-                  {t.logout}
-                </button>
+            {/* User Profile & Logout */}
+            <div className="flex items-center gap-2 pl-3 border-l border-slate-200">
+              <div className="text-right hidden sm:block">
+                <p className="text-xs font-bold text-slate-800 leading-none">{currentUser.name}</p>
+                <p className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">{currentUser.role}</p>
               </div>
-            ) : (
-              <div className="pl-3 border-l border-slate-200">
-                <button
-                  onClick={() => { setShowLoginModal(true); setAuthError(null); }}
-                  className="text-xs bg-agrigreen-700 hover:bg-agrigreen-800 text-white px-3 py-2 rounded-lg font-semibold shadow-sm transition flex items-center gap-1.5 cursor-pointer active:scale-95"
-                >
-                  <UserCheck className="w-4 h-4" />
-                  <span>{t.login}</span>
-                </button>
-              </div>
-            )}
+              <button
+                onClick={handleLogout}
+                className="text-xs bg-slate-100 hover:bg-red-50 hover:text-red-700 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200 font-semibold transition cursor-pointer"
+              >
+                {t.logout}
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -728,112 +1018,6 @@ export default function App() {
         <div className="bg-emerald-600 text-white px-4 py-2 text-center text-xs font-semibold flex items-center justify-center gap-2 shadow-xs">
           <CheckCircle2 className="w-4 h-4" />
           <span>{authSuccess}</span>
-        </div>
-      )}
-
-      {/* Mobile OTP Login Modal */}
-      {showLoginModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 relative">
-            <button
-              onClick={() => setShowLoginModal(false)}
-              className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-2xl">📱</span>
-              <h3 className="text-lg font-bold text-slate-900">{t.otp_login_title}</h3>
-            </div>
-            <p className="text-xs text-slate-500 mb-5">{t.otp_login_desc}</p>
-
-            {authError && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-medium flex items-start gap-2">
-                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-red-500" />
-                <span>{authError}</span>
-              </div>
-            )}
-
-            {/* Mobile Number Input */}
-            <div className="mb-4">
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                {t.phone_number_label}
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="tel"
-                  value={loginPhone}
-                  onChange={(e) => setLoginPhone(e.target.value)}
-                  placeholder={t.phone_placeholder}
-                  className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-agrigreen-500/20 focus:border-agrigreen-500"
-                />
-                <button
-                  type="button"
-                  onClick={handleSendOTP}
-                  disabled={authLoading || cooldownSeconds > 0}
-                  className="px-4 py-2.5 bg-agrigreen-700 hover:bg-agrigreen-800 disabled:bg-slate-300 text-white text-xs font-bold rounded-xl transition cursor-pointer whitespace-nowrap active:scale-95"
-                >
-                  {authLoading ? t.sending_otp : cooldownSeconds > 0 ? `${cooldownSeconds}s` : (otpSent ? t.resend_otp : t.send_otp)}
-                </button>
-              </div>
-              <p className="text-[11px] text-slate-400 mt-1">
-                Demo numbers: Kumar: +91-9876543210 | Restaurant A: +91-9876543211 | Selvi: +91-9876543214
-              </p>
-            </div>
-
-            {/* Demo Mode Notice Callout */}
-            {demoOtpDisplay && (
-              <div className="mb-4 p-3.5 bg-amber-50 border-2 border-amber-300 rounded-xl">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                    <span>{t.demo_otp_notice}</span>
-                  </span>
-                  <span className="text-[10px] font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full uppercase">Demo</span>
-                </div>
-                <div className="flex items-center justify-between mt-2 pt-2 border-t border-amber-200">
-                  <div>
-                    <span className="text-[11px] text-amber-800 block">{t.demo_otp_code}:</span>
-                    <span className="text-lg font-mono font-extrabold tracking-widest text-amber-950">{demoOtpDisplay}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setLoginOtp(demoOtpDisplay)}
-                    className="px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition shadow-xs active:scale-95 cursor-pointer"
-                  >
-                    Auto-fill
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* 6-Digit OTP Input */}
-            <div className="mb-5">
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                {t.otp_label}
-              </label>
-              <input
-                type="text"
-                maxLength={6}
-                value={loginOtp}
-                onChange={(e) => setLoginOtp(e.target.value.replace(/\D/g, ''))}
-                placeholder="• • • • • •"
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-center text-xl font-mono font-bold tracking-widest text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-agrigreen-500/20 focus:border-agrigreen-500"
-              />
-            </div>
-
-            {/* Verify Button */}
-            <button
-              type="button"
-              onClick={handleVerifyOTP}
-              disabled={authLoading || !loginOtp || loginOtp.length !== 6}
-              className="w-full py-3 bg-agrigreen-700 hover:bg-agrigreen-800 disabled:bg-slate-300 text-white font-bold rounded-xl shadow-md transition active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              <span>{authLoading ? t.verifying_otp : t.verify_otp}</span>
-            </button>
-          </div>
         </div>
       )}
 
@@ -877,12 +1061,11 @@ export default function App() {
       {/* PayPal Sandbox Payment Status Banner */}
       {paymentBanner && (
         <div className="max-w-7xl mx-auto px-4 mt-4">
-          <div className={`p-4 rounded-xl border flex items-center justify-between ${
-            paymentBanner.type === 'success' ? 'bg-emerald-50 border-emerald-300 text-emerald-900' :
+          <div className={`p-4 rounded-xl border flex items-center justify-between ${paymentBanner.type === 'success' ? 'bg-emerald-50 border-emerald-300 text-emerald-900' :
             paymentBanner.type === 'error' ? 'bg-rose-50 border-rose-300 text-rose-900' :
-            paymentBanner.type === 'loading' ? 'bg-blue-50 border-blue-300 text-blue-900' :
-            'bg-amber-50 border-amber-300 text-amber-900'
-          }`}>
+              paymentBanner.type === 'loading' ? 'bg-blue-50 border-blue-300 text-blue-900' :
+                'bg-amber-50 border-amber-300 text-amber-900'
+            }`}>
             <div className="flex items-center gap-2.5 text-sm font-medium">
               {paymentBanner.type === 'success' && <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />}
               {paymentBanner.type === 'error' && <AlertTriangle className="w-5 h-5 text-rose-600 flex-shrink-0" />}
@@ -928,7 +1111,7 @@ export default function App() {
 
       {/* Main Content Workspace */}
       <main className="max-w-7xl mx-auto px-4 mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
+
         {/* Left Column: Input Form (Buyer vs Farmer / Operator) */}
         {role === 'buyer' ? (
           <section className="lg:col-span-5 space-y-6">
@@ -956,11 +1139,10 @@ export default function App() {
                         setBuyerCropName(crop.name);
                         setBuyerMaxPrice((crop.defaultExpected * 1.2).toFixed(2));
                       }}
-                      className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center gap-1 ${
-                        buyerCropName.toLowerCase() === crop.name.toLowerCase()
-                          ? 'border-blue-600 bg-blue-50 text-blue-900 font-bold ring-2 ring-blue-500/20'
-                          : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                      }`}
+                      className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center gap-1 ${buyerCropName.toLowerCase() === crop.name.toLowerCase()
+                        ? 'border-blue-600 bg-blue-50 text-blue-900 font-bold ring-2 ring-blue-500/20'
+                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                        }`}
                     >
                       <span className="text-2xl">{crop.icon}</span>
                       <span className="text-xs">{lang === 'ta' ? crop.ta : crop.name}</span>
@@ -1073,292 +1255,288 @@ export default function App() {
           </section>
         ) : (
           <section className="lg:col-span-5 space-y-6">
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                <span>{role === 'operator' ? '🤝' : '🎙️'}</span>
-                <span>{role === 'operator' ? t.operator_consent_title : t.voice_input_title}</span>
-              </h2>
-              <span className="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full font-medium">
-                {role === 'operator' ? 'Operator Mode' : 'Farmer Voice'}
-              </span>
-            </div>
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <span>{role === 'operator' ? '🤝' : '🎙️'}</span>
+                  <span>{role === 'operator' ? t.operator_consent_title : t.voice_input_title}</span>
+                </h2>
+                <span className="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full font-medium">
+                  {role === 'operator' ? 'Operator Mode' : 'Farmer Voice'}
+                </span>
+              </div>
 
-            {/* Operator Consent Form Box */}
-            {role === 'operator' && (
-              <div className="mb-5 bg-amber-50 p-4 rounded-xl border border-amber-200 text-xs text-amber-900 space-y-3">
-                <p className="font-semibold text-amber-950">{t.operator_consent_desc}</p>
-                <div>
-                  <label className="block text-slate-700 font-medium mb-1">{t.farmer_name_label}</label>
+              {/* Operator Consent Form Box */}
+              {role === 'operator' && (
+                <div className="mb-5 bg-amber-50 p-4 rounded-xl border border-amber-200 text-xs text-amber-900 space-y-3">
+                  <p className="font-semibold text-amber-950">{t.operator_consent_desc}</p>
+                  <div>
+                    <label className="block text-slate-700 font-medium mb-1">{t.farmer_name_label}</label>
+                    <input
+                      type="text"
+                      value={operatorFarmerName}
+                      onChange={(e) => setOperatorFarmerName(e.target.value)}
+                      className="w-full bg-white border border-amber-300 rounded-lg p-2 text-sm"
+                      placeholder="Enter offline farmer's full name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-700 font-medium mb-1">{t.consent_method_label}</label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-1.5 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="consent"
+                          value="verbal"
+                          checked={consentMethod === 'verbal'}
+                          onChange={() => setConsentMethod('verbal')}
+                        />
+                        <span>{t.consent_verbal}</span>
+                      </label>
+                      <label className="flex items-center gap-1.5 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="consent"
+                          value="written"
+                          checked={consentMethod === 'written'}
+                          onChange={() => setConsentMethod('written')}
+                        />
+                        <span>{t.consent_written}</span>
+                      </label>
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-amber-200">
+                    <label className="flex items-start gap-2 cursor-pointer font-medium text-slate-800">
+                      <input
+                        type="checkbox"
+                        checked={consentChecked}
+                        onChange={(e) => setConsentChecked(e.target.checked)}
+                        className="mt-0.5 rounded text-agrigreen-600"
+                      />
+                      <span>I verify that farmer {operatorFarmerName || '[Farmer Name]'} gave explicit {consentMethod} consent to list this produce.</span>
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* Voice Input Microphone Widget */}
+              <div className="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200 text-center">
+                <p className="text-xs text-slate-600 mb-3 font-medium">
+                  {lang === 'ta' ? t.voice_hint_tamil : t.voice_hint}
+                </p>
+
+                <button
+                  onClick={toggleListening}
+                  className={`w-20 h-20 rounded-full mx-auto flex items-center justify-center transition shadow-md active:scale-95 ${isListening ? 'bg-red-500 animate-pulse text-white' : 'bg-agrigreen-600 hover:bg-agrigreen-700 text-white'
+                    }`}
+                >
+                  {isListening ? <MicOff className="w-8 h-8" /> : <Mic className="w-8 h-8" />}
+                </button>
+
+                <p className="text-xs text-slate-500 mt-2 font-medium">
+                  {isListening ? t.listening : t.start_speaking}
+                </p>
+
+                {speechTranscript && (
+                  <div className="mt-3 p-2.5 bg-white border border-slate-200 rounded-lg text-left text-xs text-slate-700">
+                    <span className="font-semibold text-slate-500 block mb-0.5">Voice Heard:</span>
+                    "{speechTranscript}"
+                  </div>
+                )}
+
+                {/* needs_confirmation: show candidate quantity buttons, never auto-populate */}
+                {quantityCandidates && (
+                  <div className="mt-3 p-3 bg-amber-50 border border-amber-300 rounded-lg text-left">
+                    <p className="text-xs font-semibold text-amber-900 mb-2">
+                      {lang === 'ta'
+                        ? 'அளவு தெளிவாக புரியவில்லை. சரியான அளவை தேர்ந்தெடுக்கவும்:'
+                        : 'Quantity was ambiguous. Please select the correct amount:'}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {quantityCandidates.map((cand) => (
+                        <button
+                          key={cand}
+                          type="button"
+                          onClick={() => {
+                            setQuantity(cand.toString());
+                            setQuantityCandidates(null);
+                          }}
+                          className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg transition active:scale-95"
+                        >
+                          {cand} kg
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setQuantityCandidates(null)}
+                        className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs rounded-lg transition"
+                      >
+                        {lang === 'ta' ? 'ரத்து செய்' : 'Cancel'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Crop Selection with Category Tabs, Search Box & Large Tap Targets */}
+              <div className="mb-5">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider">{t.crop}</label>
+                  {selectedCrop && (
+                    <span className="text-xs bg-agrigreen-100 text-agrigreen-900 font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1.5 border border-agrigreen-200">
+                      <span>{selectedCrop.icon}</span>
+                      <span>{lang === 'ta' ? selectedCrop.ta : selectedCrop.name}</span>
+                      <span className="text-[10px] text-agrigreen-700 bg-white/70 px-1 rounded font-normal">({t.crop_selected_msg})</span>
+                    </span>
+                  )}
+                </div>
+
+                {/* Search Box */}
+                <div className="relative mb-2.5">
+                  <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
-                    value={operatorFarmerName}
-                    onChange={(e) => setOperatorFarmerName(e.target.value)}
-                    className="w-full bg-white border border-amber-300 rounded-lg p-2 text-sm"
-                    placeholder="Enter offline farmer's full name"
+                    value={cropSearchQuery}
+                    onChange={(e) => setCropSearchQuery(e.target.value)}
+                    placeholder={t.crop_search_placeholder}
+                    className="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-agrigreen-500/20 focus:border-agrigreen-500 transition"
+                  />
+                  {cropSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setCropSearchQuery('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Category Tabs */}
+                <div className="flex gap-1.5 overflow-x-auto pb-1 mb-2.5 scrollbar-thin">
+                  <button
+                    type="button"
+                    onClick={() => setCropCategory('all')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer ${cropCategory === 'all'
+                      ? 'bg-agrigreen-700 text-white shadow-sm'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                  >
+                    {t.crop_category_all}
+                  </button>
+                  {ALL_CROP_CATEGORIES.map((cat) => (
+                    <button
+                      key={cat.key}
+                      type="button"
+                      onClick={() => setCropCategory(cat.key)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer ${cropCategory === cat.key
+                        ? 'bg-agrigreen-700 text-white shadow-sm'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
+                    >
+                      {t[cat.labelKey] || cat.key}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Crop Grid with Large Tap Targets & Selected Highlight */}
+                {filteredCrops.length === 0 ? (
+                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-center text-xs text-slate-500">
+                    {t.no_crops_found}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-64 overflow-y-auto p-1.5 border border-slate-200 rounded-xl bg-slate-50/50">
+                    {filteredCrops.map((crop) => {
+                      const isSelected = selectedCrop?.name.toLowerCase() === crop.name.toLowerCase();
+                      return (
+                        <button
+                          key={crop.name}
+                          type="button"
+                          onClick={() => {
+                            setSelectedCrop(crop);
+                            setExpectedPrice(crop.defaultExpected.toFixed(2));
+                            setMinimumPrice(crop.defaultMin.toFixed(2));
+                          }}
+                          className={`min-h-[72px] p-2 rounded-xl border text-center transition flex flex-col items-center justify-center gap-0.5 cursor-pointer active:scale-95 ${isSelected
+                            ? 'border-2 border-agrigreen-600 bg-agrigreen-50 text-agrigreen-950 font-bold ring-2 ring-agrigreen-500/30 shadow-sm'
+                            : 'border-slate-200 bg-white text-slate-700 hover:border-agrigreen-300 hover:bg-slate-50'
+                            }`}
+                        >
+                          <span className="text-2xl leading-none">{crop.icon}</span>
+                          <span className="text-xs font-semibold leading-tight line-clamp-1">
+                            {lang === 'ta' ? crop.ta : crop.name}
+                          </span>
+                          <span className="text-[10px] text-slate-400 leading-none">
+                            {lang === 'ta' ? crop.name : crop.ta}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Form Fields */}
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">{t.quantity_kg}</label>
+                  <input
+                    type="number"
+                    value={quantity}
+                    onChange={(e) => setQuantity(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm font-semibold"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-700 font-medium mb-1">{t.consent_method_label}</label>
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-1.5 cursor-pointer">
-                      <input 
-                        type="radio" 
-                        name="consent" 
-                        value="verbal" 
-                        checked={consentMethod === 'verbal'} 
-                        onChange={() => setConsentMethod('verbal')} 
-                      />
-                      <span>{t.consent_verbal}</span>
-                    </label>
-                    <label className="flex items-center gap-1.5 cursor-pointer">
-                      <input 
-                        type="radio" 
-                        name="consent" 
-                        value="written" 
-                        checked={consentMethod === 'written'} 
-                        onChange={() => setConsentMethod('written')} 
-                      />
-                      <span>{t.consent_written}</span>
-                    </label>
-                  </div>
-                </div>
-                <div className="pt-2 border-t border-amber-200">
-                  <label className="flex items-start gap-2 cursor-pointer font-medium text-slate-800">
-                    <input 
-                      type="checkbox" 
-                      checked={consentChecked} 
-                      onChange={(e) => setConsentChecked(e.target.checked)} 
-                      className="mt-0.5 rounded text-agrigreen-600"
-                    />
-                    <span>I verify that farmer {operatorFarmerName || '[Farmer Name]'} gave explicit {consentMethod} consent to list this produce.</span>
-                  </label>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">{t.location}</label>
+                  <input
+                    type="text"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm font-semibold"
+                  />
                 </div>
               </div>
-            )}
 
-            {/* Voice Input Microphone Widget */}
-            <div className="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200 text-center">
-              <p className="text-xs text-slate-600 mb-3 font-medium">
-                {lang === 'ta' ? t.voice_hint_tamil : t.voice_hint}
-              </p>
-              
+              <div className="grid grid-cols-2 gap-3 mb-5">
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">{t.asking_price}</label>
+                  <input
+                    type="number"
+                    step="0.05"
+                    value={expectedPrice}
+                    onChange={(e) => setExpectedPrice(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm font-semibold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">{t.minimum_price}</label>
+                  <input
+                    type="number"
+                    step="0.05"
+                    value={minimumPrice}
+                    onChange={(e) => setMinimumPrice(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm font-semibold"
+                  />
+                </div>
+              </div>
+
+              {/* Publish Button */}
               <button
-                onClick={toggleListening}
-                className={`w-20 h-20 rounded-full mx-auto flex items-center justify-center transition shadow-md active:scale-95 ${
-                  isListening ? 'bg-red-500 animate-pulse text-white' : 'bg-agrigreen-600 hover:bg-agrigreen-700 text-white'
-                }`}
+                onClick={handlePublishListing}
+                disabled={loading}
+                className="w-full py-3 bg-agrigreen-700 hover:bg-agrigreen-800 text-white font-bold rounded-xl shadow-md transition active:scale-95 flex items-center justify-center gap-2"
               >
-                {isListening ? <MicOff className="w-8 h-8" /> : <Mic className="w-8 h-8" />}
+                <span>✅</span>
+                <span>{role === 'operator' ? t.record_and_publish : t.publish_listing}</span>
               </button>
-
-              <p className="text-xs text-slate-500 mt-2 font-medium">
-                {isListening ? t.listening : t.start_speaking}
-              </p>
-
-              {speechTranscript && (
-                <div className="mt-3 p-2.5 bg-white border border-slate-200 rounded-lg text-left text-xs text-slate-700">
-                  <span className="font-semibold text-slate-500 block mb-0.5">Voice Heard:</span>
-                  "{speechTranscript}"
-                </div>
-              )}
-
-              {/* needs_confirmation: show candidate quantity buttons, never auto-populate */}
-              {quantityCandidates && (
-                <div className="mt-3 p-3 bg-amber-50 border border-amber-300 rounded-lg text-left">
-                  <p className="text-xs font-semibold text-amber-900 mb-2">
-                    {lang === 'ta'
-                      ? 'அளவு தெளிவாக புரியவில்லை. சரியான அளவை தேர்ந்தெடுக்கவும்:'
-                      : 'Quantity was ambiguous. Please select the correct amount:'}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {quantityCandidates.map((cand) => (
-                      <button
-                        key={cand}
-                        type="button"
-                        onClick={() => {
-                          setQuantity(cand.toString());
-                          setQuantityCandidates(null);
-                        }}
-                        className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg transition active:scale-95"
-                      >
-                        {cand} kg
-                      </button>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => setQuantityCandidates(null)}
-                      className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs rounded-lg transition"
-                    >
-                      {lang === 'ta' ? 'ரத்து செய்' : 'Cancel'}
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
-
-            {/* Crop Selection with Category Tabs, Search Box & Large Tap Targets */}
-            <div className="mb-5">
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider">{t.crop}</label>
-                {selectedCrop && (
-                  <span className="text-xs bg-agrigreen-100 text-agrigreen-900 font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1.5 border border-agrigreen-200">
-                    <span>{selectedCrop.icon}</span>
-                    <span>{lang === 'ta' ? selectedCrop.ta : selectedCrop.name}</span>
-                    <span className="text-[10px] text-agrigreen-700 bg-white/70 px-1 rounded font-normal">({t.crop_selected_msg})</span>
-                  </span>
-                )}
-              </div>
-
-              {/* Search Box */}
-              <div className="relative mb-2.5">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  value={cropSearchQuery}
-                  onChange={(e) => setCropSearchQuery(e.target.value)}
-                  placeholder={t.crop_search_placeholder}
-                  className="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-agrigreen-500/20 focus:border-agrigreen-500 transition"
-                />
-                {cropSearchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setCropSearchQuery('')}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-
-              {/* Category Tabs */}
-              <div className="flex gap-1.5 overflow-x-auto pb-1 mb-2.5 scrollbar-thin">
-                <button
-                  type="button"
-                  onClick={() => setCropCategory('all')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer ${
-                    cropCategory === 'all'
-                      ? 'bg-agrigreen-700 text-white shadow-sm'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
-                >
-                  {t.crop_category_all}
-                </button>
-                {ALL_CROP_CATEGORIES.map((cat) => (
-                  <button
-                    key={cat.key}
-                    type="button"
-                    onClick={() => setCropCategory(cat.key)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer ${
-                      cropCategory === cat.key
-                        ? 'bg-agrigreen-700 text-white shadow-sm'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                    }`}
-                  >
-                    {t[cat.labelKey] || cat.key}
-                  </button>
-                ))}
-              </div>
-
-              {/* Crop Grid with Large Tap Targets & Selected Highlight */}
-              {filteredCrops.length === 0 ? (
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-center text-xs text-slate-500">
-                  {t.no_crops_found}
-                </div>
-              ) : (
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-64 overflow-y-auto p-1.5 border border-slate-200 rounded-xl bg-slate-50/50">
-                  {filteredCrops.map((crop) => {
-                    const isSelected = selectedCrop?.name.toLowerCase() === crop.name.toLowerCase();
-                    return (
-                      <button
-                        key={crop.name}
-                        type="button"
-                        onClick={() => {
-                          setSelectedCrop(crop);
-                          setExpectedPrice(crop.defaultExpected.toFixed(2));
-                          setMinimumPrice(crop.defaultMin.toFixed(2));
-                        }}
-                        className={`min-h-[72px] p-2 rounded-xl border text-center transition flex flex-col items-center justify-center gap-0.5 cursor-pointer active:scale-95 ${
-                          isSelected
-                            ? 'border-2 border-agrigreen-600 bg-agrigreen-50 text-agrigreen-950 font-bold ring-2 ring-agrigreen-500/30 shadow-sm'
-                            : 'border-slate-200 bg-white text-slate-700 hover:border-agrigreen-300 hover:bg-slate-50'
-                        }`}
-                      >
-                        <span className="text-2xl leading-none">{crop.icon}</span>
-                        <span className="text-xs font-semibold leading-tight line-clamp-1">
-                          {lang === 'ta' ? crop.ta : crop.name}
-                        </span>
-                        <span className="text-[10px] text-slate-400 leading-none">
-                          {lang === 'ta' ? crop.name : crop.ta}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Form Fields */}
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">{t.quantity_kg}</label>
-                <input
-                  type="number"
-                  value={quantity}
-                  onChange={(e) => setQuantity(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm font-semibold"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">{t.location}</label>
-                <input
-                  type="text"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm font-semibold"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 mb-5">
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">{t.asking_price}</label>
-                <input
-                  type="number"
-                  step="0.05"
-                  value={expectedPrice}
-                  onChange={(e) => setExpectedPrice(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm font-semibold"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-600 mb-1">{t.minimum_price}</label>
-                <input
-                  type="number"
-                  step="0.05"
-                  value={minimumPrice}
-                  onChange={(e) => setMinimumPrice(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 text-sm font-semibold"
-                />
-              </div>
-            </div>
-
-            {/* Publish Button */}
-            <button
-              onClick={handlePublishListing}
-              disabled={loading}
-              className="w-full py-3 bg-agrigreen-700 hover:bg-agrigreen-800 text-white font-bold rounded-xl shadow-md transition active:scale-95 flex items-center justify-center gap-2"
-            >
-              <span>✅</span>
-              <span>{role === 'operator' ? t.record_and_publish : t.publish_listing}</span>
-            </button>
-          </div>
-        </section>
+          </section>
         )}
 
         {/* Right Column: Matching, Negotiations & PayPal Flow */}
         <section className="lg:col-span-7 space-y-6">
-          
+
           {/* Active Listing & Match Header */}
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-3">
@@ -1485,7 +1663,7 @@ export default function App() {
                 ))
               )}
             </div>
-            
+
             {audioFeedback && (
               <p className="text-xs text-amber-800 mt-2 font-medium">{audioFeedback}</p>
             )}
@@ -1511,9 +1689,8 @@ export default function App() {
                       <p className="text-xs text-slate-500">
                         Buyer: {o.buyer_name} • Agreed: ${o.agreed_price.toFixed(2)}/kg • Total: <span className="font-bold text-slate-800">${o.total_amount.toFixed(2)} USD</span>
                       </p>
-                      <span className={`inline-block mt-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${
-                        o.payment_status === 'completed' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
-                      }`}>
+                      <span className={`inline-block mt-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${o.payment_status === 'completed' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                        }`}>
                         Payment: {o.payment_status.toUpperCase()}
                       </span>
                     </div>
@@ -1552,7 +1729,7 @@ export default function App() {
                 <Layers className="w-5 h-5 text-agrigreen-500" />
                 <h3 className="text-sm font-bold tracking-wide uppercase text-slate-200">{t.agent_activity_title}</h3>
               </div>
-              <button 
+              <button
                 onClick={() => setShowLogsPanel(!showLogsPanel)}
                 className="text-xs text-slate-400 hover:text-white underline"
               >

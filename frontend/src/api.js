@@ -151,6 +151,10 @@ export const api = {
     sessionStorage.removeItem("hl_user");
   },
 
+  getAuthToken: () => {
+    return sessionStorage.getItem("hl_auth_token") || sessionStorage.getItem("hl_buyer_token") || null;
+  },
+
   getStoredUser: () => {
     try {
       const u = sessionStorage.getItem("hl_user");
@@ -160,17 +164,33 @@ export const api = {
     }
   },
 
-  ensureBuyerAuth: async () => {
-    let token = sessionStorage.getItem("hl_buyer_token") || sessionStorage.getItem("hl_auth_token");
+  validateSession: async () => {
+    const token = api.getAuthToken();
     if (!token) {
-      try {
-        const authData = await api.login("restaurant_a@harvestlink.org", "buyer123");
-        token = authData.access_token;
-      } catch (e) {
-        console.warn("Auto-login demo buyer skipped or failed", e);
-      }
+      api.logout();
+      return null;
     }
-    return token;
+    try {
+      const res = await fetch(`${API_BASE}/auth/me`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (!res.ok) {
+        api.logout();
+        return null;
+      }
+      const user = await res.json();
+      sessionStorage.setItem("hl_user", JSON.stringify(user));
+      return user;
+    } catch (e) {
+      console.warn("Session validation check failed", e);
+      api.logout();
+      return null;
+    }
+  },
+
+  ensureBuyerAuth: async () => {
+    // Return active session token. Never automatically log in visitors using seeded credentials!
+    return api.getAuthToken();
   },
 
   // Orders
@@ -242,9 +262,17 @@ export const api = {
     if (!res.ok) return [];
     return res.json();
   },
+
   fetchImpactMetrics: async () => {
     const res = await fetch(`${API_BASE}/impact/metrics`);
     if (!res.ok) return null;
+    return res.json();
+  },
+
+  // PayPal configuration
+  fetchPayPalConfig: async () => {
+    const res = await fetch("http://localhost:8000/");
+    if (!res.ok) throw new Error("Could not fetch PayPal configuration");
     return res.json();
   }
 };
