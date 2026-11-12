@@ -334,15 +334,16 @@ def parse_tamil_or_english_text(raw_text: str) -> Dict[str, Any]:
             detected_crop = TAMIL_CROP_MAP[keyword]
             break
 
-    # 2. Extract Price if present (e.g. "$1", "1 டாலர்", "80 ரூபாய்", "1 dollar")
-    # Identify price span so we don't treat price digits as quantity
+    # 2. Extract Price (English, numeric Tamil and Tamil word amounts)
     detected_price = None
     price_spans = []
-    
-    for pat in [
-        r'(?:\$|ரூபாய்|rs\.?|usd|டாலர்)\s*(\d+(?:\.\d+)?)',
-        r'(\d+(?:\.\d+)?)\s*(?:\$|ரூபாய்|rs\.?|usd|டாலர்|dollars?|dollar|inr)'
-    ]:
+    price_patterns = [
+        r'(?:\$|ரூபாய்|ரூபா|rs\.?|usd|டாலர்)\s*(\d+(?:\.\d+)?)',
+        r'(\d+(?:\.\d+)?)\s*(?:\$|ரூபாய்|ரூபா|rs\.?|usd|dollars?|dollar|inr|டாலர்)',
+        r'விலை\s*(\d+(?:\.\d+)?)',
+        r'(\d+(?:\.\d+)?)\s*விலை'
+    ]
+    for pat in price_patterns:
         for match in re.finditer(pat, text, re.IGNORECASE):
             try:
                 val = float(match.group(1))
@@ -352,13 +353,26 @@ def parse_tamil_or_english_text(raw_text: str) -> Dict[str, Any]:
             except ValueError:
                 pass
 
+    # Detect Tamil word amounts before price words
+    tamil_price_pattern = (
+        r'((?:[\u0b80-\u0bff]+(?:\s+|$))+?)'
+        r'\s*(ரூபாய்|ரூபா|ரூபாய்க்கு)'
+    )
+
+    for match in re.finditer(tamil_price_pattern, text):
+        price_words = match.group(1).strip()
+        values = extract_tamil_word_numbers(price_words)
+
+        if values:
+            detected_price = values[-1]
+            price_spans.append(match.span())
+
     # Helper: check if a span overlaps with price spans
     def overlaps_price(start: int, end: int) -> bool:
         for p_start, p_end in price_spans:
             if not (end <= p_start or start >= p_end):
                 return True
         return False
-
     # 3. Extract Quantity candidates
     quantity_candidates: List[float] = []
 
@@ -374,8 +388,17 @@ def parse_tamil_or_english_text(raw_text: str) -> Dict[str, Any]:
             except ValueError:
                 pass
 
-    # B) Extract Tamil word numbers
-    tamil_words_candidates = extract_tamil_word_numbers(text)
+    # B) Extract Tamil word numbers, excluding detected price phrases
+    quantity_text = list(text)
+
+    for start, end in price_spans:
+        for index in range(start, end):
+            quantity_text[index] = " "
+
+    tamil_words_candidates = extract_tamil_word_numbers(
+        "".join(quantity_text)
+    )
+
     for w_val in tamil_words_candidates:
         if w_val > 0:
             quantity_candidates.append(w_val)
