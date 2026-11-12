@@ -19,6 +19,7 @@ from app.core.config import settings
 @pytest.fixture(autouse=True)
 def force_test_settings(monkeypatch):
     monkeypatch.setattr(settings, "PAYPAL_MODE", "mock")
+    monkeypatch.setattr(settings, "LLM_API_KEY", "")
 
 # Store test database in local temp directory to prevent OneDrive file lock contention
 TEST_DB_FILE = os.path.join(tempfile.gettempdir(), f"test_hl_{os.getpid()}.db").replace(os.sep, "/")

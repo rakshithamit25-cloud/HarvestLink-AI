@@ -20,6 +20,18 @@ def run_matching(
     if not listing:
         raise HTTPException(status_code=404, detail="Produce listing not found")
 
+    # If unconfirmed 'proposed' matches exist on this listing, release their stock and refresh proposals
+    unconfirmed = db.query(MatchResult).filter(
+        MatchResult.listing_id == listing_id,
+        MatchResult.status == "proposed"
+    ).all()
+    if unconfirmed:
+        for m in unconfirmed:
+            listing.available_quantity += m.allocated_quantity
+            db.delete(m)
+        listing.listing_status = "active"
+        db.commit()
+
     result_state = execute_matching_pipeline(db, listing, mode=mode)
     
     # Fetch updated matches

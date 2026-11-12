@@ -17,109 +17,295 @@ def _require_demo_mode():
         raise HTTPException(status_code=403, detail="Demo mode is disabled")
 
 def seed_database(db: Session):
-    # Check if already seeded
-    if db.query(User).count() > 0:
-        return
+    """
+    Idempotently seeds demo users, listings, buyer requirements, and match proposals
+    for Tomato, Onion, Potato, and Carrot.
+    Safe to run repeatedly on startup or reset without duplicating records.
+    """
+    # 1. Seed Users if not present
+    farmer_kumar = db.query(User).filter(User.email == "kumar@harvestlink.org").first()
+    if not farmer_kumar:
+        farmer_kumar = User(
+            name="Kumar",
+            email="kumar@harvestlink.org",
+            hashed_password=hash_password("farmer123"),
+            role="farmer",
+            phone="+91-9876543210",
+            preferred_language="ta"
+        )
+        db.add(farmer_kumar)
 
-    # Seed Users
-    farmer_kumar = User(
-        name="Kumar",
-        email="kumar@harvestlink.org",
-        hashed_password=hash_password("farmer123"),
-        role="farmer",
-        phone="+91-9876543210",
-        preferred_language="ta"
-    )
-    buyer_restaurant_a = User(
-        name="Restaurant A (Salem)",
-        email="restaurant_a@harvestlink.org",
-        hashed_password=hash_password("buyer123"),
-        role="buyer",
-        phone="+91-9876543211",
-        preferred_language="en"
-    )
-    buyer_supermarket_b = User(
-        name="Supermarket B (Erode)",
-        email="supermarket_b@harvestlink.org",
-        hashed_password=hash_password("buyer123"),
-        role="buyer",
-        phone="+91-9876543212",
-        preferred_language="en"
-    )
-    buyer_processor_c = User(
-        name="Food Processor C (Namakkal)",
-        email="processor_c@harvestlink.org",
-        hashed_password=hash_password("buyer123"),
-        role="buyer",
-        phone="+91-9876543213",
-        preferred_language="en"
-    )
-    operator_selvi = User(
-        name="Selvi (FPO Operator)",
-        email="selvi@harvestlink.org",
-        hashed_password=hash_password("operator123"),
-        role="operator",
-        phone="+91-9876543214",
-        preferred_language="ta"
-    )
+    buyer_restaurant_a = db.query(User).filter(User.email == "restaurant_a@harvestlink.org").first()
+    if not buyer_restaurant_a:
+        buyer_restaurant_a = User(
+            name="Restaurant A (Salem)",
+            email="restaurant_a@harvestlink.org",
+            hashed_password=hash_password("buyer123"),
+            role="buyer",
+            phone="+91-9876543211",
+            preferred_language="en"
+        )
+        db.add(buyer_restaurant_a)
 
-    db.add_all([farmer_kumar, buyer_restaurant_a, buyer_supermarket_b, buyer_processor_c, operator_selvi])
+    buyer_supermarket_b = db.query(User).filter(User.email == "supermarket_b@harvestlink.org").first()
+    if not buyer_supermarket_b:
+        buyer_supermarket_b = User(
+            name="Supermarket B (Erode)",
+            email="supermarket_b@harvestlink.org",
+            hashed_password=hash_password("buyer123"),
+            role="buyer",
+            phone="+91-9876543212",
+            preferred_language="en"
+        )
+        db.add(buyer_supermarket_b)
+
+    buyer_processor_c = db.query(User).filter(User.email == "processor_c@harvestlink.org").first()
+    if not buyer_processor_c:
+        buyer_processor_c = User(
+            name="Food Processor C (Namakkal)",
+            email="processor_c@harvestlink.org",
+            hashed_password=hash_password("buyer123"),
+            role="buyer",
+            phone="+91-9876543213",
+            preferred_language="en"
+        )
+        db.add(buyer_processor_c)
+
+    operator_selvi = db.query(User).filter(User.email == "selvi@harvestlink.org").first()
+    if not operator_selvi:
+        operator_selvi = User(
+            name="Selvi (FPO Operator)",
+            email="selvi@harvestlink.org",
+            hashed_password=hash_password("operator123"),
+            role="operator",
+            phone="+91-9876543214",
+            preferred_language="ta"
+        )
+        db.add(operator_selvi)
+
     db.commit()
     db.refresh(farmer_kumar)
     db.refresh(buyer_restaurant_a)
     db.refresh(buyer_supermarket_b)
     db.refresh(buyer_processor_c)
+    db.refresh(operator_selvi)
 
-    # Seed Buyer Requirements
-    req_a = BuyerRequirement(
-        buyer_id=buyer_restaurant_a.id,
-        buyer_name="Restaurant A",
-        crop_name="Tomato",
-        required_quantity=100.0,
-        maximum_price=1.20,
-        location="Salem",
-        required_date="2026-11-10",
-        status="open"
-    )
-    req_b = BuyerRequirement(
-        buyer_id=buyer_supermarket_b.id,
-        buyer_name="Supermarket B",
-        crop_name="Tomato",
-        required_quantity=200.0,
-        maximum_price=1.05,
-        location="Erode",
-        required_date="2026-11-11",
-        status="open"
-    )
-    req_c = BuyerRequirement(
-        buyer_id=buyer_processor_c.id,
-        buyer_name="Food Processor C",
-        crop_name="Tomato",
-        required_quantity=150.0,
-        maximum_price=0.95,
-        location="Namakkal",
-        required_date="2026-11-12",
-        status="open"
-    )
-    db.add_all([req_a, req_b, req_c])
-    db.commit()
+    # 2. Seed Demo Produce Listings & Buyer Requirements for 4 core crops
+    demo_crops = [
+        {
+            "crop_name": "Tomato",
+            "quantity": 500.0,
+            "expected_price": 1.00,
+            "minimum_price": 0.90,
+            "location": "Salem",
+            "harvest_date": "2026-11-08",
+            "freshness_status": "fresh",
+            "requirements": [
+                {
+                    "buyer_id": buyer_restaurant_a.id,
+                    "buyer_name": "Restaurant A",
+                    "quantity": 100.0,
+                    "max_price": 1.20,
+                    "location": "Salem",
+                    "date": "2026-11-10",
+                },
+                {
+                    "buyer_id": buyer_supermarket_b.id,
+                    "buyer_name": "Supermarket B",
+                    "quantity": 200.0,
+                    "max_price": 1.05,
+                    "location": "Erode",
+                    "date": "2026-11-11",
+                },
+                {
+                    "buyer_id": buyer_processor_c.id,
+                    "buyer_name": "Food Processor C",
+                    "quantity": 150.0,
+                    "max_price": 0.95,
+                    "location": "Namakkal",
+                    "date": "2026-11-12",
+                },
+            ],
+        },
+        {
+            "crop_name": "Onion",
+            "quantity": 600.0,
+            "expected_price": 0.80,
+            "minimum_price": 0.70,
+            "location": "Salem",
+            "harvest_date": "2026-11-08",
+            "freshness_status": "fresh",
+            "requirements": [
+                {
+                    "buyer_id": buyer_restaurant_a.id,
+                    "buyer_name": "Restaurant A",
+                    "quantity": 150.0,
+                    "max_price": 0.90,
+                    "location": "Salem",
+                    "date": "2026-11-10",
+                },
+                {
+                    "buyer_id": buyer_supermarket_b.id,
+                    "buyer_name": "Supermarket B",
+                    "quantity": 250.0,
+                    "max_price": 0.85,
+                    "location": "Erode",
+                    "date": "2026-11-11",
+                },
+                {
+                    "buyer_id": buyer_processor_c.id,
+                    "buyer_name": "Food Processor C",
+                    "quantity": 200.0,
+                    "max_price": 0.75,
+                    "location": "Namakkal",
+                    "date": "2026-11-12",
+                },
+            ],
+        },
+        {
+            "crop_name": "Potato",
+            "quantity": 800.0,
+            "expected_price": 0.70,
+            "minimum_price": 0.60,
+            "location": "Salem",
+            "harvest_date": "2026-11-08",
+            "freshness_status": "fresh",
+            "requirements": [
+                {
+                    "buyer_id": buyer_restaurant_a.id,
+                    "buyer_name": "Restaurant A",
+                    "quantity": 200.0,
+                    "max_price": 0.80,
+                    "location": "Salem",
+                    "date": "2026-11-10",
+                },
+                {
+                    "buyer_id": buyer_supermarket_b.id,
+                    "buyer_name": "Supermarket B",
+                    "quantity": 300.0,
+                    "max_price": 0.75,
+                    "location": "Erode",
+                    "date": "2026-11-11",
+                },
+                {
+                    "buyer_id": buyer_processor_c.id,
+                    "buyer_name": "Food Processor C",
+                    "quantity": 300.0,
+                    "max_price": 0.65,
+                    "location": "Namakkal",
+                    "date": "2026-11-12",
+                },
+            ],
+        },
+        {
+            "crop_name": "Carrot",
+            "quantity": 400.0,
+            "expected_price": 1.20,
+            "minimum_price": 1.00,
+            "location": "Salem",
+            "harvest_date": "2026-11-08",
+            "freshness_status": "fresh",
+            "requirements": [
+                {
+                    "buyer_id": buyer_restaurant_a.id,
+                    "buyer_name": "Restaurant A",
+                    "quantity": 100.0,
+                    "max_price": 1.35,
+                    "location": "Salem",
+                    "date": "2026-11-10",
+                },
+                {
+                    "buyer_id": buyer_supermarket_b.id,
+                    "buyer_name": "Supermarket B",
+                    "quantity": 150.0,
+                    "max_price": 1.25,
+                    "location": "Erode",
+                    "date": "2026-11-11",
+                },
+                {
+                    "buyer_id": buyer_processor_c.id,
+                    "buyer_name": "Food Processor C",
+                    "quantity": 150.0,
+                    "max_price": 1.10,
+                    "location": "Namakkal",
+                    "date": "2026-11-12",
+                },
+            ],
+        },
+    ]
 
-    # Seed Farmer Kumar's Produce Listing
-    listing_kumar = ProduceListing(
-        farmer_id=farmer_kumar.id,
-        crop_name="Tomato",
-        quantity=500.0,
-        available_quantity=500.0,
-        unit="kg",
-        expected_price=1.00,
-        minimum_price=0.90,  # Kumar minimum $0.90 enables genuine overlap with Buyer C (max $0.95)
-        location="Salem",
-        harvest_date="2026-11-08",
-        freshness_status="fresh",
-        listing_status="active"
-    )
-    db.add(listing_kumar)
-    db.commit()
+    for crop_data in demo_crops:
+        # Idempotently check listing
+        listing = db.query(ProduceListing).filter(
+            ProduceListing.farmer_id == farmer_kumar.id,
+            ProduceListing.crop_name == crop_data["crop_name"]
+        ).first()
+
+        if not listing:
+            listing = ProduceListing(
+                farmer_id=farmer_kumar.id,
+                crop_name=crop_data["crop_name"],
+                quantity=crop_data["quantity"],
+                available_quantity=crop_data["quantity"],
+                unit="kg",
+                expected_price=crop_data["expected_price"],
+                minimum_price=crop_data["minimum_price"],
+                location=crop_data["location"],
+                harvest_date=crop_data["harvest_date"],
+                freshness_status=crop_data["freshness_status"],
+                listing_status="active"
+            )
+            db.add(listing)
+            db.commit()
+            db.refresh(listing)
+
+        # Idempotently check requirements — with deduplication guard
+        for req_data in crop_data["requirements"]:
+            # Fetch ALL rows for this (buyer_id, crop_name) pair to catch legacy duplicates
+            all_matching = db.query(BuyerRequirement).filter(
+                BuyerRequirement.buyer_id == req_data["buyer_id"],
+                BuyerRequirement.crop_name == crop_data["crop_name"]
+            ).order_by(BuyerRequirement.id).all()
+
+            if not all_matching:
+                # Create the canonical requirement
+                new_req = BuyerRequirement(
+                    buyer_id=req_data["buyer_id"],
+                    buyer_name=req_data["buyer_name"],
+                    crop_name=crop_data["crop_name"],
+                    required_quantity=req_data["quantity"],
+                    maximum_price=req_data["max_price"],
+                    location=req_data["location"],
+                    required_date=req_data["date"],
+                    status="open"
+                )
+                db.add(new_req)
+            else:
+                # Keep the first (lowest-id = earliest canonical) row; remove any extras
+                canonical = all_matching[0]
+                for extra in all_matching[1:]:
+                    # Only remove extras that have no completed payment-linked MatchResult
+                    extra_matches = db.query(MatchResult).filter(
+                        MatchResult.buyer_requirement_id == extra.id,
+                        MatchResult.status == "confirmed"
+                    ).count()
+                    if extra_matches == 0:
+                        # Delete any unconfirmed MatchResults for this extra req first
+                        db.query(MatchResult).filter(
+                            MatchResult.buyer_requirement_id == extra.id,
+                            MatchResult.status != "confirmed"
+                        ).delete()
+                        db.delete(extra)
+
+                # Normalize buyer_name and location on the canonical row
+                canonical.buyer_name = req_data["buyer_name"]
+                canonical.location = req_data["location"]
+        db.commit()
+
+        # Idempotently execute matching pipeline if no matches exist yet for this listing
+        match_count = db.query(MatchResult).filter(MatchResult.listing_id == listing.id).count()
+        if match_count == 0:
+            execute_matching_pipeline(db, listing, mode="rule-based")
 
 @router.post("/reset")
 def reset_database(db: Session = Depends(get_db)):
@@ -145,9 +331,15 @@ async def run_kumar_demo_scenario(db: Session = Depends(get_db)):
     Base.metadata.create_all(bind=engine)
     seed_database(db)
 
-    # 2. Retrieve Kumar's listing
-    listing = db.query(ProduceListing).first()
+    # 2. Retrieve Kumar's Tomato listing
+    listing = db.query(ProduceListing).filter(ProduceListing.crop_name == "Tomato").first()
     farmer = db.query(User).filter(User.role == "farmer").first()
+
+    # Reset Tomato listing matches and stock so the scenario replays deterministically
+    db.query(MatchResult).filter(MatchResult.listing_id == listing.id).delete()
+    listing.available_quantity = listing.quantity
+    listing.listing_status = "active"
+    db.commit()
     
     # 3. Execute Multi-Agent Pipeline
     agent_state = execute_matching_pipeline(db, listing, mode="rule-based")

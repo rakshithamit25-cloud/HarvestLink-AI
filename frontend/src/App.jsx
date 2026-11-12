@@ -192,10 +192,68 @@ export default function App() {
   const [listings, setListings] = useState([]);
   const [activeListing, setActiveListing] = useState(null);
   const [matches, setMatches] = useState([]);
+  const [isMatchesLoading, setIsMatchesLoading] = useState(false);
   const [orders, setOrders] = useState([]);
   const [agentLogs, setAgentLogs] = useState([]);
   const [impactMetrics, setImpactMetrics] = useState(null);
   const [showLogsPanel, setShowLogsPanel] = useState(true);
+
+  const selectedCropRef = useRef(selectedCrop);
+  useEffect(() => {
+    selectedCropRef.current = selectedCrop;
+  }, [selectedCrop]);
+
+  const listingsRef = useRef(listings);
+  useEffect(() => {
+    listingsRef.current = listings;
+  }, [listings]);
+
+  const matchRequestIdRef = useRef(0);
+
+  // Select Crop and Synchronize Active Listing + Matches
+  const handleSelectCrop = async (crop, currentListings = listingsRef.current) => {
+    if (!crop) return;
+
+    // Increment request ID on every crop selection change to invalidate previous pending requests
+    const requestId = ++matchRequestIdRef.current;
+
+    setSelectedCrop(crop);
+    selectedCropRef.current = crop;
+    setExpectedPrice(crop.defaultExpected.toFixed(2));
+    setMinimumPrice(crop.defaultMin.toFixed(2));
+
+    // Clear previous crop matches immediately so stale data is never shown
+    setMatches([]);
+
+    const cropName = crop.name.toLowerCase();
+    const matchingListing = currentListings.find(
+      (l) => l.crop_name && l.crop_name.toLowerCase() === cropName
+    );
+
+    if (matchingListing) {
+      setActiveListing(matchingListing);
+      setIsMatchesLoading(true);
+      try {
+        const matchData = await api.fetchMatches(matchingListing.id);
+        if (requestId === matchRequestIdRef.current) {
+          setMatches(Array.isArray(matchData) ? matchData : []);
+        }
+      } catch (err) {
+        console.error("Error fetching matches for listing", err);
+        if (requestId === matchRequestIdRef.current) {
+          setMatches([]);
+        }
+      } finally {
+        if (requestId === matchRequestIdRef.current) {
+          setIsMatchesLoading(false);
+        }
+      }
+    } else {
+      // Invalidate any previous pending requests and reset states
+      setActiveListing(null);
+      setIsMatchesLoading(false);
+    }
+  };
 
   // Speech Recognition Setup
   const recognitionRef = useRef(null);
@@ -223,7 +281,7 @@ export default function App() {
             setQuantityCandidates(null);
             if (parsed.crop_name) {
               const matchedCrop = CROPS.find(c => c.name.toLowerCase() === parsed.crop_name.toLowerCase());
-              if (matchedCrop) setSelectedCrop(matchedCrop);
+              if (matchedCrop) handleSelectCrop(matchedCrop);
             }
             if (parsed.quantity) setQuantity(parsed.quantity.toString());
             if (parsed.expected_price) setExpectedPrice(parsed.expected_price.toString());
@@ -337,7 +395,7 @@ export default function App() {
     }
   };
 
-  const refreshData = async () => {
+  const refreshData = async (targetCropName) => {
     try {
       const [allListings, allOrders, logs, metrics, allReqs] = await Promise.all([
         api.fetchListings(),
@@ -346,18 +404,29 @@ export default function App() {
         api.fetchImpactMetrics(),
         api.fetchBuyerRequirements()
       ]);
-      setListings(Array.isArray(allListings) ? allListings : []);
+      const safeListings = Array.isArray(allListings) ? allListings : [];
+      setListings(safeListings);
+      listingsRef.current = safeListings;
       setOrders(Array.isArray(allOrders) ? allOrders : []);
       setAgentLogs(Array.isArray(logs) ? logs : []);
       setImpactMetrics(metrics && typeof metrics === 'object' && !Array.isArray(metrics) ? metrics : null);
       setBuyerRequirements(Array.isArray(allReqs) ? allReqs : []);
 
-      const safeListings = Array.isArray(allListings) ? allListings : [];
-      if (safeListings.length > 0) {
-        const first = safeListings[0];
-        setActiveListing(first);
-        const matchData = await api.fetchMatches(first.id);
-        setMatches(Array.isArray(matchData) ? matchData : []);
+      const cropToMatch = (targetCropName || selectedCropRef.current?.name || '').toLowerCase();
+      const matching = safeListings.find(
+        (l) => l.crop_name && l.crop_name.toLowerCase() === cropToMatch
+      );
+      if (matching) {
+        setActiveListing(matching);
+        try {
+          const matchData = await api.fetchMatches(matching.id);
+          setMatches(Array.isArray(matchData) ? matchData : []);
+        } catch (e) {
+          setMatches([]);
+        }
+      } else {
+        setActiveListing(null);
+        setMatches([]);
       }
     } catch (e) {
       console.error("Data refresh error", e);
@@ -407,7 +476,9 @@ export default function App() {
     try {
       const res = await api.runDemoScenario();
       setDemoBanner(`Scenario completed: 450 kg allocated across 3 buyers. Remaining: ${res.remaining_inventory_kg} kg. All orders settled in Sandbox USD.`);
-      await refreshData();
+      setSelectedCrop(CROPS[0]);
+      selectedCropRef.current = CROPS[0];
+      await refreshData("Tomato");
     } catch (e) {
       setDemoBanner("Failed to run demo scenario.");
     } finally {
@@ -421,7 +492,9 @@ export default function App() {
     try {
       await api.resetDemoData();
       setDemoBanner("Database reset to pristine seed data.");
-      await refreshData();
+      setSelectedCrop(CROPS[0]);
+      selectedCropRef.current = CROPS[0];
+      await refreshData("Tomato");
     } catch (e) {
       alert("Error resetting data");
     } finally {
@@ -433,13 +506,14 @@ export default function App() {
   const handlePublishListing = async () => {
     setLoading(true);
     try {
+      let createdListing;
       if (role === 'operator') {
         if (!consentChecked) {
           alert("Operator action requires explicit farmer consent verification.");
           setLoading(false);
           return;
         }
-        await api.createOperatorListing({
+        createdListing = await api.createOperatorListing({
           farmer_name: operatorFarmerName,
           consent_method: consentMethod,
           crop_name: selectedCrop.name,
@@ -451,7 +525,7 @@ export default function App() {
           freshness_status: freshness
         });
       } else {
-        await api.createListing({
+        createdListing = await api.createListing({
           crop_name: selectedCrop.name,
           quantity: parseFloat(quantity),
           expected_price: parseFloat(expectedPrice),
@@ -461,7 +535,16 @@ export default function App() {
           freshness_status: freshness
         });
       }
-      await refreshData();
+      await refreshData(selectedCrop.name);
+      if (createdListing && createdListing.id) {
+        setActiveListing(createdListing);
+        try {
+          const matchData = await api.fetchMatches(createdListing.id);
+          setMatches(Array.isArray(matchData) ? matchData : []);
+        } catch (e) {
+          setMatches([]);
+        }
+      }
       alert("Produce listing successfully published!");
     } catch (e) {
       alert("Error creating listing");
@@ -497,7 +580,7 @@ export default function App() {
     setLoading(true);
     try {
       await api.runMatching(activeListing.id, "rule-based");
-      await refreshData();
+      await refreshData(activeListing.crop_name);
     } catch (e) {
       alert("Error executing AI agents");
     } finally {
@@ -1452,11 +1535,7 @@ export default function App() {
                         <button
                           key={crop.name}
                           type="button"
-                          onClick={() => {
-                            setSelectedCrop(crop);
-                            setExpectedPrice(crop.defaultExpected.toFixed(2));
-                            setMinimumPrice(crop.defaultMin.toFixed(2));
-                          }}
+                          onClick={() => handleSelectCrop(crop)}
                           className={`min-h-[72px] p-2 rounded-xl border text-center transition flex flex-col items-center justify-center gap-0.5 cursor-pointer active:scale-95 ${isSelected
                             ? 'border-2 border-agrigreen-600 bg-agrigreen-50 text-agrigreen-950 font-bold ring-2 ring-agrigreen-500/30 shadow-sm'
                             : 'border-slate-200 bg-white text-slate-700 hover:border-agrigreen-300 hover:bg-slate-50'
@@ -1546,14 +1625,16 @@ export default function App() {
                   <span>{t.matching_title}</span>
                 </h2>
                 <p className="text-xs text-slate-500">
-                  {activeListing ? `Active Listing: ${activeListing.crop_name} (${activeListing.available_quantity} kg available / ${activeListing.quantity} kg total)` : 'No active listing'}
+                  {activeListing
+                    ? `Active Listing: ${activeListing.crop_name} (${activeListing.available_quantity} kg available / ${activeListing.quantity} kg total)`
+                    : `No active listing published yet for ${selectedCrop ? (lang === 'ta' ? selectedCrop.ta : selectedCrop.name) : 'selected crop'}.`}
                 </p>
               </div>
 
               <button
                 onClick={handleRunAgents}
                 disabled={loading || !activeListing}
-                className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs px-3.5 py-2 rounded-lg flex items-center gap-1.5 transition active:scale-95 shadow-sm"
+                className="bg-amber-500 hover:bg-amber-600 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-slate-950 font-bold text-xs px-3.5 py-2 rounded-lg flex items-center gap-1.5 transition active:scale-95 shadow-sm"
               >
                 <Sparkles className="w-4 h-4" />
                 <span>Run Agent Negotiation</span>
@@ -1562,9 +1643,23 @@ export default function App() {
 
             {/* Matches List */}
             <div className="mt-4 space-y-3">
-              {matches.length === 0 ? (
+              {isMatchesLoading ? (
+                <div className="p-8 text-center text-slate-500 text-sm flex items-center justify-center gap-2">
+                  <RefreshCw className="w-4 h-4 animate-spin text-agrigreen-600" />
+                  <span>Loading matches for {lang === 'ta' ? selectedCrop?.ta : selectedCrop?.name}...</span>
+                </div>
+              ) : !activeListing ? (
+                <div className="p-8 text-center text-slate-500 text-sm bg-slate-50 rounded-xl border border-dashed border-slate-300">
+                  <p className="font-semibold text-slate-700 mb-1">
+                    No active listing published yet for {selectedCrop ? (lang === 'ta' ? selectedCrop.ta : selectedCrop.name) : 'selected crop'}.
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    Publish a listing to discover buyer demand and trigger multi-buyer allocations.
+                  </p>
+                </div>
+              ) : matches.length === 0 ? (
                 <div className="p-8 text-center text-slate-400 text-sm">
-                  Click "Run Agent Negotiation" or run the demo to view multi-buyer allocations.
+                  Click "Run Agent Negotiation" or run the demo to view multi-buyer allocations for {lang === 'ta' ? selectedCrop?.ta : activeListing.crop_name}.
                 </div>
               ) : (
                 matches.map((m) => (
@@ -1624,15 +1719,36 @@ export default function App() {
                       </div>
                     </div>
 
-                    <p className="text-xs text-slate-600 mb-3 bg-white/60 p-2 rounded border border-slate-100">
-                      ℹ️ {m.match_reason || 'Reason not available'}
-                    </p>
+                    {/* Split match_reason from negotiation note for clean display */}
+                    {(() => {
+                      const reasonRaw = m.match_reason || '';
+                      const splitIdx = reasonRaw.indexOf(' | Negotiation: ');
+                      const matchPart = splitIdx >= 0 ? reasonRaw.slice(0, splitIdx) : reasonRaw;
+                      const negoNote = splitIdx >= 0 ? reasonRaw.slice(splitIdx + ' | Negotiation: '.length) : null;
+                      return (
+                        <div className="mb-3 space-y-1.5">
+                          {matchPart && (
+                            <p className="text-xs text-slate-600 bg-white/60 p-2 rounded border border-slate-100">
+                              ℹ️ {matchPart}
+                            </p>
+                          )}
+                          {negoNote && (
+                            <p className="text-xs text-amber-700 bg-amber-50 p-2 rounded border border-amber-100">
+                              🤖 AI Negotiation: {negoNote}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {/* Action Buttons */}
                     <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-200/60">
                       {/* Audio Playback button */}
                       <button
-                        onClick={() => playOfferAudio(`${m.buyer_name} ${m.allocated_quantity} கிலோ தக்காளியை ஒரு கிலோவுக்கு ${m.ai_suggested_price} டாலருக்கு வாங்க சம்மதிக்கிறது.`)}
+                        onClick={() => {
+                          const cropTa = ALL_CROPS.find(c => c.name.toLowerCase() === (m.crop_name || activeListing?.crop_name || '').toLowerCase())?.ta || m.crop_name || 'பயிர்';
+                          playOfferAudio(`${m.buyer_name} ${m.allocated_quantity} கிலோ ${cropTa}-ஐ ஒரு கிலோவுக்கு ${m.ai_suggested_price} டாலருக்கு வாங்க சம்மதிக்கிறது.`);
+                        }}
                         className="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition"
                       >
                         <Volume2 className="w-3.5 h-3.5" />

@@ -1,8 +1,8 @@
-\# 🌾 HarvestLink AI
+﻿# 🌾 HarvestLink AI
 
 
 
-\### Agentic AI-Powered Agricultural Commerce Platform
+### Agentic AI-Powered Agricultural Commerce Platform
 
 
 
@@ -14,33 +14,33 @@ The platform supports Tamil and English listing input, helping farmers communica
 
 
 
-\## 🚀 Key Features
+## 🚀 Key Features
 
 
 
-\- \*\*Tamil and English Listing Input:\*\* Create agricultural listings using Tamil or English text and voice-oriented listing workflows.
+- **Tamil and English Listing Input:** Create agricultural listings using Tamil or English text and voice-oriented listing workflows.
 
-\- \*\*AI-Assisted Parsing:\*\* Extract crop names, quantities, prices, and locations from listing descriptions.
+- **AI-Assisted Parsing:** Extract crop names, quantities, prices, and locations from listing descriptions.
 
-\- \*\*Multi-Agent Workflow:\*\* Separate agent components support commerce, demand discovery, matching, and negotiation workflows.
+- **Multi-Agent Workflow:** Separate agent components support commerce, demand discovery, matching, and negotiation workflows.
 
-\- \*\*Buyer-Farmer Matching:\*\* Match farmer listings with buyer requirements.
+- **Buyer-Farmer Matching:** Match farmer listings with buyer requirements.
 
-\- \*\*Approval Workflow:\*\* Support farmer and buyer approval or rejection of proposed matches.
+- **Approval Workflow:** Support farmer and buyer approval or rejection of proposed matches.
 
-\- \*\*Authentication:\*\* Email/password and mobile OTP authentication endpoints.
+- **Authentication:** Email/password and mobile OTP authentication endpoints.
 
-\- \*\*Order Management:\*\* Manage orders and delivery confirmation.
+- **Order Management:** Manage orders and delivery confirmation.
 
-\- \*\*Digital Payments:\*\* PayPal Sandbox integration with a mock payment mode for local demonstrations.
+- **Digital Payments:** PayPal Sandbox integration with a mock payment mode for local demonstrations.
 
-\- \*\*FPO Operator Support:\*\* Operator listing workflows and audit logs.
+- **FPO Operator Support:** Operator listing workflows and audit logs.
 
-\- \*\*Impact Monitoring:\*\* Dashboard metrics and agent activity logs.
+- **Impact Monitoring:** Dashboard metrics and agent activity logs.
 
 
 
-\## 🛠️ Technology Stack
+## 🛠️ Technology Stack
 
 
 
@@ -68,7 +68,7 @@ The platform supports Tamil and English listing input, helping farmers communica
 
 
 
-\## 🏗️ Project Architecture
+## 🏗️ Project Architecture
 
 
 
@@ -84,15 +84,15 @@ HarvestLink-AI/
 
 │   │   ├── agents/
 
-│   │   │   ├── commerce\_agent.py
+│   │   │   ├── commerce_agent.py
 
-│   │   │   ├── demand\_discovery.py
+│   │   │   ├── demand_discovery.py
 
-│   │   │   ├── matching\_agent.py
+│   │   │   ├── matching_agent.py
 
-│   │   │   ├── negotiation\_agent.py
+│   │   │   ├── negotiation_agent.py
 
-│   │   │   ├── llm\_client.py
+│   │   │   ├── llm_client.py
 
 │   │   │   ├── state.py
 
@@ -142,17 +142,17 @@ HarvestLink-AI/
 
 │   │   ├── services/
 
-│   │   │   ├── tamil\_parser.py
+│   │   │   ├── tamil_parser.py
 
-│   │   │   ├── matching\_service.py
+│   │   │   ├── matching_service.py
 
-│   │   │   ├── order\_service.py
+│   │   │   ├── order_service.py
 
-│   │   │   ├── inventory\_service.py
+│   │   │   ├── inventory_service.py
 
-│   │   │   ├── otp\_service.py
+│   │   │   ├── otp_service.py
 
-│   │   │   └── paypal\_service.py
+│   │   │   └── paypal_service.py
 
 │   │   │
 
@@ -198,11 +198,11 @@ HarvestLink-AI/
 
 
 
-\## ⚙️ Local Installation and Setup
+## ⚙️ Local Installation and Setup
 
 
 
-\### Prerequisites
+### Prerequisites
 
 
 
@@ -210,15 +210,15 @@ Install the following:
 
 
 
-\- Python 3.10 or later
+- Python 3.10 or later
 
-\- Node.js and npm
+- Node.js and npm
 
-\- Git
+- Git
 
 
 
-\### 1. Clone the repository
+### 1. Clone the repository
 
 
 
@@ -232,7 +232,7 @@ cd HarvestLink-AI
 
 
 
-\### 2. Set up the Python backend
+### 2. Set up the Python backend
 
 
 
@@ -240,7 +240,7 @@ Create and activate a virtual environment.
 
 
 
-\*\*Windows PowerShell:\*\*
+**Windows PowerShell:**
 
 
 
@@ -266,7 +266,7 @@ python -m pip install -r requirements.txt
 
 
 
-\### 3. Configure environment variables
+### 3. Configure environment variables
 
 
 
@@ -296,33 +296,33 @@ Important settings:
 
 | `ENVIRONMENT` | Application environment |
 
-| `SECRET\_KEY` | Application security key |
+| `SECRET_KEY` | Application security key |
 
-| `DATABASE\_URL` | Database connection |
+| `DATABASE_URL` | Database connection |
 
-| `DEMO\_MODE` | Enables demo API endpoints |
+| `DEMO_MODE` | Enables demo API endpoints |
 
-| `OTP\_DEMO\_MODE` | Enables demo OTP behavior |
+| `OTP_DEMO_MODE` | Enables demo OTP behavior |
 
-| `LLM\_PROVIDER` | AI provider selection |
+| `LLM_PROVIDER` | AI provider selection |
 
-| `LLM\_API\_KEY` | AI provider API key |
+| `LLM_API_KEY` | AI provider API key |
 
-| `LLM\_MODEL` | Selected model |
+| `LLM_MODEL` | Selected model |
 
-| `LLM\_BASE\_URL` | AI provider endpoint |
+| `LLM_BASE_URL` | AI provider endpoint |
 
-| `PAYPAL\_MODE` | `mock` or `sandbox` |
+| `PAYPAL_MODE` | `mock` or `sandbox` |
 
-| `PAYPAL\_CLIENT\_ID` | PayPal Sandbox client ID |
+| `PAYPAL_CLIENT_ID` | PayPal Sandbox client ID |
 
-| `PAYPAL\_CLIENT\_SECRET` | PayPal Sandbox secret |
+| `PAYPAL_CLIENT_SECRET` | PayPal Sandbox secret |
 
-| `PAYPAL\_CURRENCY` | Payment currency |
+| `PAYPAL_CURRENCY` | Payment currency |
 
-| `FRONTEND\_URL` | Allowed frontend origins |
+| `FRONTEND_URL` | Allowed frontend origins |
 
-| `BACKEND\_URL` | Backend URL |
+| `BACKEND_URL` | Backend URL |
 
 
 
@@ -338,11 +338,11 @@ For actual PayPal Sandbox integration, configure your own Sandbox credentials.
 
 
 
-\*\*Never commit your `.env` file or expose API keys and payment credentials.\*\*
+**Never commit your `.env` file or expose API keys and payment credentials.**
 
 
 
-\### 4. Start the backend
+### 4. Start the backend
 
 
 
@@ -398,7 +398,7 @@ On startup, the application initializes database tables and seeds demo data.
 
 
 
-\### 5. Install and start the frontend
+### 5. Install and start the frontend
 
 
 
@@ -430,7 +430,7 @@ http://localhost:5173
 
 
 
-\### 6. Build the frontend
+### 6. Build the frontend
 
 
 
@@ -452,29 +452,29 @@ The generated build is placed in `frontend/dist`.
 
 
 
-\## 🔄 Application Workflow
+## 🔄 Application Workflow
 
 
 
-1\. \*\*Farmer Listing:\*\* A farmer enters crop details, quantity, expected price, and location using Tamil or English input.
+1. **Farmer Listing:** A farmer enters crop details, quantity, expected price, and location using Tamil or English input.
 
-2\. \*\*Information Extraction:\*\* The backend parser extracts relevant listing information.
+2. **Information Extraction:** The backend parser extracts relevant listing information.
 
-3\. \*\*Buyer Requirements:\*\* Buyers submit their agricultural product requirements.
+3. **Buyer Requirements:** Buyers submit their agricultural product requirements.
 
-4\. \*\*AI-Assisted Matching:\*\* Matching components evaluate available listings against buyer requirements.
+4. **AI-Assisted Matching:** Matching components evaluate available listings against buyer requirements.
 
-5\. \*\*Approval:\*\* Farmers and buyers can approve or reject proposed matches.
+5. **Approval:** Farmers and buyers can approve or reject proposed matches.
 
-6\. \*\*Order Creation:\*\* Approved matches can proceed through the order workflow.
+6. **Order Creation:** Approved matches can proceed through the order workflow.
 
-7\. \*\*Payment:\*\* Payment processing uses the configured mock or PayPal Sandbox mode.
+7. **Payment:** Payment processing uses the configured mock or PayPal Sandbox mode.
 
-8\. \*\*Monitoring:\*\* Agent logs, operator audit logs, and impact metrics support activity monitoring.
+8. **Monitoring:** Agent logs, operator audit logs, and impact metrics support activity monitoring.
 
 
 
-\## 🔌 API Overview
+## 🔌 API Overview
 
 
 
@@ -522,7 +522,7 @@ For complete request and response schemas, visit:
 
 
 
-\## 🧪 Testing
+## 🧪 Testing
 
 
 
@@ -538,11 +538,11 @@ python -m pytest backend/tests/ -v
 
 
 
-The project test suite has previously passed \*\*72 tests\*\*.
+The project test suite has previously passed **77 tests**.
 
 
 
-\## 💳 Payment Configuration
+## 💳 Payment Configuration
 
 
 
@@ -550,9 +550,9 @@ HarvestLink AI supports two payment modes:
 
 
 
-\- \*\*Mock mode:\*\* Simulates payment processing for local demonstrations.
+- **Mock mode:** Simulates payment processing for local demonstrations.
 
-\- \*\*PayPal Sandbox mode:\*\* Uses configured PayPal Sandbox credentials for testing the payment workflow.
+- **PayPal Sandbox mode:** Uses configured PayPal Sandbox credentials for testing the payment workflow.
 
 
 
@@ -564,21 +564,21 @@ Sandbox transactions are for testing and do not represent real production paymen
 
 
 
-\## 🔐 Security and Deployment Notes
+## 🔐 Security and Deployment Notes
 
 
 
-\- Keep `.env` and private credentials out of version control.
+- Keep `.env` and private credentials out of version control.
 
-\- Replace development secrets before production deployment.
+- Replace development secrets before production deployment.
 
-\- Use a production database configuration where appropriate.
+- Use a production database configuration where appropriate.
 
-\- Configure frontend origins correctly for deployment.
+- Configure frontend origins correctly for deployment.
 
-\- Use HTTPS and production-grade authentication and payment settings.
+- Use HTTPS and production-grade authentication and payment settings.
 
-\- Validate external AI and payment service configuration before enabling production workflows.
+- Validate external AI and payment service configuration before enabling production workflows.
 
 
 
@@ -586,25 +586,25 @@ The frontend currently uses `http://localhost:8000/api` as its API base URL. Upd
 
 
 
-\## 🌱 Future Improvements
+## 🌱 Future Improvements
 
 
 
-\- More robust regional-language speech recognition.
+- More robust regional-language speech recognition.
 
-\- Improved crop and quantity extraction for different dialects.
+- Improved crop and quantity extraction for different dialects.
 
-\- Advanced demand forecasting and price intelligence.
+- Advanced demand forecasting and price intelligence.
 
-\- More detailed geographic farmer-buyer matching.
+- More detailed geographic farmer-buyer matching.
 
-\- Production deployment with scalable database infrastructure.
+- Production deployment with scalable database infrastructure.
 
-\- Expanded farmer accessibility and offline support.
+- Expanded farmer accessibility and offline support.
 
 
 
-\## 🎯 Project Vision
+## 🎯 Project Vision
 
 
 
@@ -612,37 +612,39 @@ Our vision is to make agricultural commerce more accessible, transparent, and ef
 
 
 
-\*\*HarvestLink AI — Connecting Farmers, Buyers, and Opportunities.\*\*
+**HarvestLink AI — Connecting Farmers, Buyers, and Opportunities.**
 
 
 
-\---
+---
 
 
 
-\*\*Repository:\*\* https://github.com/rakshithamit25-cloud/HarvestLink-AI                                                                       ## ⚠️ Limitations (Honest Status)
+**Repository:** https://github.com/rakshithamit25-cloud/HarvestLink-AI                                                                       ## ⚠️ Limitations (Honest Status)
 
 
 
-\- \*\*PayPal:\*\* Verified with a real Sandbox payment. Use US-based Sandbox accounts (India-based ones fail with a currency error). Prices are in USD; spoken rupee prices are not converted.
+- **PayPal:** Verified with a real Sandbox payment. Use US-based Sandbox accounts (India-based ones fail with a currency error). Prices are in USD; spoken rupee prices are not converted.
 
-\- \*\*Mobile OTP login:\*\* Verification logic is implemented, but delivery is in demo mode (the code is shown on screen). SMS delivery is future work.
+- **Mobile OTP login:** Verification logic is implemented, but delivery is in demo mode (the code is shown on screen). SMS delivery is future work.
 
-\- \*\*Reservation expiry:\*\* Not implemented; stock is released on rejection only.
+- **Reservation expiry:** Not implemented; stock is released on rejection only.
 
-\- \*\*Database:\*\* PostgreSQL is untested; SQLite is the tested database.
+- **Database:** PostgreSQL is untested; SQLite is the tested database.
 
-\- \*\*Operator dashboard:\*\* Operators currently see an empty order list.
+- **Operator dashboard:** Operators currently see an empty order list.
 
-\- \*\*Voice input and audio playback:\*\* Tested in Chrome only.
+- **Voice input and audio playback:** Tested in Chrome only.
 
-\- \*\*AI agents:\*\* Call a Groq LLM when an API key is configured; otherwise, they use rule-based processing. The Agent Activity Panel shows which mode ran.
+- **AI agents:** Call a Groq LLM when an API key is configured; otherwise, they use rule-based processing. The Agent Activity Panel shows which mode ran.
 
 
 
-\## License
+## License
 
 
 
 MIT
+
+
 
